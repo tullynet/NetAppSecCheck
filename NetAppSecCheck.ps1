@@ -62,11 +62,13 @@ Version:
   Bug fixes
     Check for presence of data svms prior to Anti-Ransomware checks
     Corrected issues with the IPsecPolicy section 
-    Corrected the check for 
+    Corrected an issue while handing a null hash function for certificate based users
 
   General Changes
     Moved summary item titles into the main "Items" hashtable 
     Reworked the CIFS section 
+    Moved the summary object creation to a function 
+    Moved the output header text to a hashtable
 
   Cosmetic Changes
     Progress indicator during data collection
