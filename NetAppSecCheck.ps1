@@ -135,7 +135,8 @@ function Get-ClusterData {
     if ($VersionCheck -ge $Items[$key].RequiredVersion) {
       $Items[$key].Result = Get-ClusterRestData $Items[$key].Url
       $Items[$key].Supported = $True
-    } else {
+    }
+    else {
       $Items[$key].Supported = $False
     }
     $PercentComplete = [math]::Round(($ItemsIndex / $Items.Count) * 100, 0)
@@ -146,11 +147,13 @@ function Get-ClusterData {
 # Test Connection/Authentication
 Try {
   $Cluster = Get-ClusterRestData "cluster"
-} Catch {
+}
+Catch {
   if ($_.Exception.Message) {
     Write-Output "Error: Failed to connect or authenticate to the cluster."
     Write-Output $_.Exception.Message
-  } else {
+  }
+  else {
     Write-Output $_
   }
   Exit
@@ -797,14 +800,15 @@ function Format-ClusterData {
   # Begin - General Configuration - Category 1
   # NTP Servers
   $Items.NTPServers.FullHeader = $ItemHeaders.NTPServers
-  If ($Items.NTPServers.Result.num_records -ne 0){
+  if ($Items.NTPServers.Result.num_records -ne 0) {
     $Items.NTPServers.Formatted = ForEach ($_ in $Items.NTPServers.Result.records) {
       New-Object psobject -Property @{
         "NTP Servers" = ($_.Server).ToString()
       }
     }
     $Items.NTPServers.FullData = $Items.NTPServers.Formatted | Format-Table "NTP Servers" | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.NTPServers.FullData = "`n$Spacer No NTP Servers Found.`n"
   }
   $Items.NTPServers.Summary = Add-Summary $Items.NTPServers.SummaryItem ($Items.NTPServers.Result.num_records -ge 3) 1
@@ -840,15 +844,17 @@ function Format-ClusterData {
 
   # Cloud Insights
   $Items.CloudInsights.FullHeader = $ItemHeaders.CloudInsights
-  If ($Items.CloudInsights.Supported) {
-    If ($Items.CloudInsights.Result.num_records -ne 0) {
+  if ($Items.CloudInsights.Supported) {
+    if ($Items.CloudInsights.Result.num_records -ne 0) {
       $Items.CloudInsights.FullData = $Items.CloudInsights.Result.records | Format-Table | Out-String -Stream | Add-Indentation
       $Items.CloudInsights.Summary = Add-Summary $Items.CloudInsights.SummaryItem ($Items.CloudInsights.Result.records.application_url.contains("cloudinsights.netapp.com")) 1
-    } Else {
+    }
+    else {
       $Items.CloudInsights.FullData = "`n$Spacer No Results Returned.`n"
       $Items.CloudInsights.Summary = Add-Summary $Items.CloudInsights.SummaryItem "False" 1
     }
-  } Else {
+  }
+  else {
     $Items.CloudInsights.FullData = "`n$Spacer Not available in this release.`n"
     $Items.CloudInsights.Summary = Add-Summary $Items.CloudInsights.SummaryItem "Not available in this release" 1
   }
@@ -886,7 +892,7 @@ function Format-ClusterData {
 
   # Log Forwarding
   $Items.LogForwarding.FullHeader = $ItemHeaders.LogForwarding
-  If ($Items.LogForwarding.Result.num_records -ne 0) {
+  if ($Items.LogForwarding.Result.num_records -ne 0) {
     $Items.LogForwarding.Formatted = ForEach ($_ in $Items.LogForwarding.Result.records) {
       New-Object psobject -Property @{
         Destination = ($_.Destination).ToString()
@@ -894,16 +900,18 @@ function Format-ClusterData {
       }
     }
     $Items.LogForwarding.FullData = $Items.LogForwarding.Formatted | Format-Table Destination, Port | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.LogForwarding.FullData = "`n$Spacer No Remote Destination Found.`n"
   }
   $Items.LogForwarding.Summary = Add-Summary $Items.LogForwarding.SummaryItem ($Items.LogForwarding.Result.num_records -ne 0) 1
 
   # System Configuration Backup
   $Items.SystemConfigBackup.FullHeader = $ItemHeaders.SystemConfigBackup
-  If ($Items.SystemConfigBackup.Result.url) {
+  if ($Items.SystemConfigBackup.Result.url) {
     $Items.SystemConfigBackup.FullData = "System Configuration Backup Destination:`n$Spacer $($Items.SystemConfigBackup.Result.url)`n"
-  } Else {
+  }
+  else {
     $Items.SystemConfigBackup.FullData = "`n$Spacer No Remote Destination Found.`n"
   }
   $Items.SystemConfigBackup.Summary = Add-Summary $Items.SystemConfigBackup.SummaryItem (![string]::IsNullOrEmpty($Items.SystemConfigBackup.Result.url)) 1
@@ -943,7 +951,7 @@ function Format-ClusterData {
 
   # REST Roles
   $Items.RestRoles.FullHeader = $ItemHeaders.RestRoles
-  If ($Items.RestRoles.Supported) {
+  if ($Items.RestRoles.Supported) {
     $Items.RestRoles.Formatted = ForEach ($_ in $Items.RestRoles.Result.records) {
       New-Object psobject -Property @{
         VServer = ($_.vserver).ToString()
@@ -953,7 +961,8 @@ function Format-ClusterData {
       }
     }
     $Items.RestRoles.FullData = $Items.RestRoles.Formatted | Format-Table VServer, Role, API, Access | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.RestRoles.FullData = "`n$Spacer Not Supported in this release.`n"
   }
 
@@ -975,21 +984,22 @@ function Format-ClusterData {
 
   # Multi-Admin Verification
   $Items.MultiAdminVerify.FullHeader = $ItemHeaders.MultiAdminVerify
-  If ($Items.MultiAdminVerify.Supported) {
+  if ($Items.MultiAdminVerify.Supported) {
     $Items.MultiAdminVerify.Formatted = New-Object psobject -Property @{
       Enabled              = ($Items.MultiAdminVerify.Result.enabled).ToString()
       "Required Approvers" = ($Items.MultiAdminVerify.Result.required_approvers).ToString()
     }
     $Items.MultiAdminVerify.FullData = $Items.MultiAdminVerify.Formatted | Format-Table Enabled, "Required Approvers" | Out-String -Stream | Add-Indentation
     $Items.MultiAdminVerify.Summary = Add-Summary $Items.MultiAdminVerify.SummaryItem $Items.MultiAdminVerify.Result.enabled 3
-  } else {
+  }
+  else {
     $Items.MultiAdminVerify.FullData = "`n$Spacer Multi-Admin Verification is not supported in this release. Consider upgrading to 9.11.1 or later.`n"
     $Items.MultiAdminVerify.Summary = Add-Summary $Items.MultiAdminVerify.SummaryItem "Not available in this release" 3
   }
 
   # SNMP Users
   $Items.SNMPUsers.FullHeader = $ItemHeaders.SNMPUsers
-  If ($Items.SNMPUsers.Result.num_records -ne 0) {
+  if ($Items.SNMPUsers.Result.num_records -ne 0) {
     $Items.SNMPUsers.Formatted = ForEach ($_ in $Items.SNMPUsers.Result.records) {
       New-Object psobject -Property @{
         VServer     = ($_.vserver).ToString()
@@ -999,14 +1009,15 @@ function Format-ClusterData {
       }
     }
     $Items.SNMPUsers.FullData = $Items.SNMPUserss.Formatted | Format-Table username, vserver, application, authmethod | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.SNMPUsers.FullData = "`n$Spacer No SNMP users found with community authentication method.`n"
   }
   $Items.SNMPUsers.Summary = Add-Summary $Items.SNMPUsers.SummaryItem ($Items.SNMPUsers.Result.num_records -eq 0) 3
 
   # RSH and Telnet Users
   $Items.RSHUsers.FullHeader = $ItemHeaders.RSHUsers
-  If ($Items.RSHUsers.Result.num_records -ne 0) {
+  if ($Items.RSHUsers.Result.num_records -ne 0) {
     $Items.RSHUsers.Formatted = ForEach ($_ in $Items.RSHUsers.Result.records) {
       New-Object psobject -Property @{
         VServer         = ($_.vserver).ToString()
@@ -1019,11 +1030,12 @@ function Format-ClusterData {
       }
     }
     $Items.RSHUsers.FullData = $Items.RSHUsers.Formatted | Format-Table username, vserver, application, "role name", authmethod, "2ndAuthMethod", Locked | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.RSHUsers.FullData = "`n$Spacer No users found with RSH application access."
   }
   $Items.RSHUsers.Summary = Add-Summary $Items.RSHUsers.SummaryItem ($Items.RSHUsers.Result.num_records -eq 0) 3
-  If ($Items.TelnetUsers.Result.num_records -ne 0) {
+  if ($Items.TelnetUsers.Result.num_records -ne 0) {
     $Items.TelnetUsers.Formatted = ForEach ($_ in $Items.TelnetUsers.Result.records) {
       New-Object psobject -Property @{
         VServer         = ($_.vserver).ToString()
@@ -1036,7 +1048,8 @@ function Format-ClusterData {
       }
     }
     $Items.TelnetUsers.FullData = $Items.TelnetUsers.Formatted | Format-Table username, vserver, application, "role name", authmethod, "2ndAuthMethod", Locked | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.TelnetUsers.FullData = "`n$Spacer No users found with Telnet application access.`n"
   }
   $Items.TelnetUsers.Summary = Add-Summary $Items.TelnetUsers.SummaryItem ($Items.TelnetUsers.Result.num_records -eq 0) 3
@@ -1045,7 +1058,7 @@ function Format-ClusterData {
   # Begin - Secure Communication - Category 4
   # Cluster Peer Details
   $Items.ClusterPeerEncryption.FullHeader = $ItemHeaders.ClusterPeerEncryption
-  If ($Items.ClusterPeerEncryption.Result.num_records -ne 0) {
+  if ($Items.ClusterPeerEncryption.Result.num_records -ne 0) {
     $Items.ClusterPeerEncryption.Formatted = ForEach ($_ in $Items.ClusterPeerEncryption.Result.records) {
       New-Object psobject -Property @{
         Cluster               = ($_.cluster).ToString()
@@ -1054,7 +1067,8 @@ function Format-ClusterData {
     }
     $Items.ClusterPeerEncryption.FullData = $Items.ClusterPeerEncryption.Formatted | Format-Table Cluster, "Encryption Protocol" | Out-String -Stream | Add-Indentation
     $Items.ClusterPeerEncryption.Summary = Add-Summary $Items.ClusterPeerEncryption.SummaryItem (!$Items.ClusterPeerEncryption.Formatted."Encryption Protocol".contains("none")) 4
-  } else {
+  }
+  else {
     $Items.ClusterPeerEncryption.FullData = "`n$Spacer No Cluster Peer Relationships Found.`n"
     $Items.ClusterPeerEncryption.Summary = Add-Summary $Items.ClusterPeerEncryption.SummaryItem "No Cluster Peers Found" 4
   }
@@ -1072,16 +1086,18 @@ function Format-ClusterData {
 
   # IPSec
   $Items.IPSec.FullHeader = $ItemHeaders.IPSec
-  If ($Items.IPSec.Supported) {
+  if ($Items.IPSec.Supported) {
     $Items.IPSec.FullData = "`n$Spacer IPsec Enabled - $($Items.IPsec.Result.enabled)`n"
-    If ($Items.IPsecPolicy.Result.num_records -ne 0) {
+    if ($Items.IPsecPolicy.Result.num_records -ne 0) {
       $Items.IPSecPolicy.FullData = $Items.IPsecPol.Result.records | Format-Table | Out-String -Stream | Add-Indentation
-    } Else {
+    }
+    else {
       $Items.IPSecPolicy.FullData = "$Spacer No IPsec Policies Found.`n"
     }
     $Items.IPSec.Summary = Add-Summary $Items.IPSec.SummaryItem $Items.IPsec.Result.enabled 4
     $Items.IPSecPolicy.Summary = Add-Summary $Items.IPSecPolicy.SummaryItem ($Items.IPsecPolicy.Result.num_records -ne 0) 4
-  } Else {
+  }
+  else {
     $Items.IPSec.FullData = "`n$Spacer IPsec is not supported in this release. Consider upgrading to 9.8 or later.`n"
     $Items.IPSec.Summary = Add-Summary $Items.IPSec.SummaryItem "Not available in this release" 4
     $Items.IPSecPolicy.Summary = Add-Summary $Items.IPSecPolicy.SummaryItem "Not available in this release" 4
@@ -1089,45 +1105,47 @@ function Format-ClusterData {
 
   # Problematic Ciphers
   $Items.SSHCiphers.FullHeader = $ItemHeaders.SSHCiphers
-  If ($Items.SSHCiphers.Result.num_records -ne 0) {
+  if ($Items.SSHCiphers.Result.num_records -ne 0) {
     ForEach ($_ in $Items.SSHCiphers.Result.records) {
       $Items.SSHCiphers.VServer = $_.vserver
       $Items.SSHCiphers.Ciphers = $_.ciphers -split ","
       $Items.SSHCiphers.Formatted = @()
       ForEach ($_ in $Items.SSHCiphers.Ciphers) {
-        If ($_.contains("cbc")) {
+        if ($_.contains("cbc")) {
           $Items.SSHCiphers.Formatted += New-Object -TypeName psobject -Property @{VServer = $Items.SSHCiphers.VServer; Cipher = $_ }
         }
       }
     }
     $Items.SSHCiphers.FullData = $Items.SSHCiphers.Formatted | Format-Table VServer, Cipher | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.SSHCiphers.FullData = "`n$Spacer No Problematic Ciphers Found.`n"
   }
   $Items.SSHCiphers.Summary = Add-Summary $Items.SSHCiphers.SummaryItem ($Items.SSHCiphers.Result.num_records -eq 0) 4
 
   # Problematic Algorithms
   $Items.SSHAlgorithms.FullHeader = $ItemHeaders.SSHAlgorithms
-  If ($Items.SSHAlgorithms.Result.num_records -ne 0) {
+  if ($Items.SSHAlgorithms.Result.num_records -ne 0) {
     ForEach ($_ in $Items.SSHAlgorithms.Result.records) {
       $Items.SSHAlgorithms.VServer = $_.vserver
       $Items.SSHAlgorithms.Algorithms = $_.mac_algorithms -split ","
       $Items.SSHAlgorithms.Formatted = @()
       ForEach ($_ in $Items.SSHAlgorithms.Algorithms) {
-        If ($_.contains("etm")) {
+        if ($_.contains("etm")) {
           $Items.SSHAlgorithms.Formatted += New-Object -TypeName psobject -Property @{VServer = $Items.SSHAlgorithms.VServer; Algorithm = $_ }
         }
       }
     }
     $Items.SSHAlgorithms.FullData = $Items.SSHAlgorithms.Formatted | Format-Table VServer, Algorithm | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.SSHAlgorithms.FullData = "`n$Spacer No Problematic Algorithms Found.`n"
   }
   $Items.SSHAlgorithms.Summary = Add-Summary $Items.SSHAlgorithms.SummaryItem ($Items.SSHAlgorithms.Result.num_records -eq 0) 4
 
   # Self-Signed Certificates
   $Items.SelfSignedCerts.FullHeader = $ItemHeaders.SelfSignedCerts
-  If ($Items.SelfSignedCerts.Result.num_records -ne 0) {
+  if ($Items.SelfSignedCerts.Result.num_records -ne 0) {
     $Items.SelfSignedCerts.Formatted = ForEach ($_ in $Items.SelfSignedCerts.Result.records) {
       New-Object psobject -Property @{
         VServer       = ($_.vserver).ToString()
@@ -1139,7 +1157,8 @@ function Format-ClusterData {
       }
     }
     $Items.SelfSignedCerts.FullData = $Items.SelfSignedCerts.Formatted | Format-Table Vserver, CommonName, Serial, CA, Type, "Self-Signed" | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.SelfSignedCerts.FullData = "`n$Spacer No Results Returned.`n"
   }
   $Items.SelfSignedCerts.Summary = Add-Summary $Items.SelfSignedCerts.SummaryItem ($Items.SelfSignedCerts.Result.num_records -eq 0) 4
@@ -1155,9 +1174,10 @@ function Format-ClusterData {
       }
     }
   }
-  If($Items.ExpiredCerts.Formatted.Count -gt 0){
+  if ($Items.ExpiredCerts.Formatted.Count -gt 0) {
     $Items.ExpiredCerts.FullData = $Items.ExpiredCerts.Formatted | Format-Table Vserver, CommonName, Expiration | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.ExpiredCerts.FullData = "`n$Spacer No Results Returned.`n"
   }
   $Items.ExpiredCerts.Summary = Add-Summary $Items.ExpiredCerts.SummaryItem ($Items.ExpiredCerts.Formatted.Count -eq 0) 4
@@ -1188,16 +1208,18 @@ function Format-ClusterData {
       AuthMethod  = ($_.authentication_method).ToString()
     }
   }
-  If ($Items.HTTPUsers.Result.records.num_records -ne 0) {
+  if ($Items.HTTPUsers.Result.records.num_records -ne 0) {
     $Items.HTTPUsers.FullHeader = "$Spacer HTTP Users"
     $Items.HTTPUsers.FullData = $Items.HTTPUsers.Formatted | Format-Table VServer, Username, Application, AuthMethod | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.HTTPUsers.FullData = "`n$Spacer No HTTP Users Found.`n"
   }
-  If ($Items.ONTAPIUsers.Result.records.num_records -ne 0) {
+  if ($Items.ONTAPIUsers.Result.records.num_records -ne 0) {
     $Items.ONTAPIUsers.FullHeader = "$Spacer ONTAPI Users"
     $Items.ONTAPIUsers.FullData = $Items.ONTAPIUsers.Formatted | Format-Table VServer, Username, Application, AuthMethod | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.ONTAPIUsers.FullData = "`n$Spacer No ONTAPI Users Found.`n"
   }
 
@@ -1214,7 +1236,7 @@ function Format-ClusterData {
 
   # SAML
   $Items.SAML.FullHeader = $ItemHeaders.SAML
-  If ($Items.SAML.Result.records.num_records -ne 0) {
+  if ($Items.SAML.Result.records.num_records -ne 0) {
     $Items.SAML.Formatted = ForEach ($_ in $Items.SAML.Result.records) {
       New-Object psobject -Property @{
         Node    = ($_.node).ToString()
@@ -1223,7 +1245,8 @@ function Format-ClusterData {
       }
     }
     $Items.SAML.FullData = $Items.SAML.Formatted | Format-Table Node, Status, Enabled | Out-String -Stream | Add-Indentation
-  } else {
+  }
+  else {
     $Items.SAML.FullData = "`n$Spacer No Results Returned.`n"
   }
   $Items.SAML.Summary = Add-Summary $Items.SAML.SummaryItem (!$Items.SAML.Formatted.enabled.contains("False")) 4
@@ -1233,7 +1256,7 @@ function Format-ClusterData {
   # CIFS Things
   #
   # Skip the entire section if there are no CIFS svms
-  If ($Items.CIFSSvms.Result.num_records -ne 0) {
+  if ($Items.CIFSSvms.Result.num_records -ne 0) {
     # CIFS Signing
     $Items.CIFSSigning.FullHeader = $ItemHeaders.CIFSSigning
     $Items.CIFSSigning.Formatted = ForEach ($_ in $Items.CIFSSigning.Result.records) {
@@ -1247,7 +1270,7 @@ function Format-ClusterData {
 
     # CIFS Workgroups
     $Items.CIFSWorkgroup.FullHeader = $ItemHeaders.CIFSWorkgroup
-    If ($Items.CIFSWorkgroup.Result.num_records -ne 0) {
+    if ($Items.CIFSWorkgroup.Result.num_records -ne 0) {
       $Items.CIFSWorkgroup.Formatted = ForEach ($_ in $Items.CIFSWorkgroup.Result.records) {
         New-Object psobject -Property @{
           VServer      = ($_.vserver).ToString()
@@ -1255,14 +1278,15 @@ function Format-ClusterData {
         }
       }
       $Items.CIFSWorkgroup.FullData = $Items.CIFSWorkgroup.Formatted | Format-Table VServer, "Auth Style" | Out-String -Stream | Add-Indentation
-    } Else{
+    }
+    else {
       $Items.CIFSWorkgroup.FullData = "`n$Spacer No CIFS SVMs configured for workgroup access.`n"
     }
     $Items.CIFSWorkgroup.Summary = Add-Summary $Items.CIFSWorkgroup.SummaryItem ($Items.CIFSWorkgroup.Result.num_records -eq 0) 5
 
     # CIFS SMB1
     $Items.CIFSSMB1.FullHeader = $ItemHeaders.CIFSSMB1
-    If ($Items.CIFSSMB1.Result.num_records -ne 0) {
+    if ($Items.CIFSSMB1.Result.num_records -ne 0) {
       $Items.CIFSSMB1.Formatted = ForEach ($_ in $Items.CIFSSMB1.Result.records) {
         New-Object psobject -Property @{
           VServer        = ($_.vserver).ToString()
@@ -1270,7 +1294,8 @@ function Format-ClusterData {
         }
       }
       $Items.CIFSSMB1.FullData = $Items.CIFSSMB1.Formatted | Format-Table VServer, "SMB1 Enabled" | Out-String -Stream | Add-Indentation
-    } Else {
+    }
+    else {
       $Items.CIFSSMB1.FullData = "`n$Spacer No CIFS SVMs configured for SMB1.`n"
     }
     $Items.CIFSSMB1.Summary = Add-Summary $Items.CIFSSMB1.SummaryItem ($Items.CIFSSMB1.Result.num_records -eq 0) 5
@@ -1278,7 +1303,7 @@ function Format-ClusterData {
     # AD LDAP
     $Items.LDAP.FullHeader = $ItemHeaders.LDAP
     $Items.LDAP.Formatted = ForEach ($_ in $Items.LDAP.Result.records) {
-      If ($Items.CIFSSvms.Result.records -match ($_.vserver)) {
+      if ($Items.CIFSSvms.Result.records -match ($_.vserver)) {
         New-Object psobject -Property @{
           VServer                        = ($_.vserver).ToString()
           "Session Security for AD LDAP" = ($_.session_security_for_ad_ldap).ToString()
@@ -1291,7 +1316,7 @@ function Format-ClusterData {
     # CIFS VScan
     $Items.VScan.FullHeader = $ItemHeaders.VScan
     $Items.VScan.Formatted = ForEach ($_ in $Items.VScan.Result.records) {
-      If ($Items.CIFSSvms.Result.records -match ($_.vserver)) {
+      if ($Items.CIFSSvms.Result.records -match ($_.vserver)) {
         New-Object psobject -Property @{
           VServer        = ($_.vserver).ToString()
           "VScan Status" = ($_.vscan_status).ToString()
@@ -1302,14 +1327,15 @@ function Format-ClusterData {
     $Items.VScan.Summary = Add-Summary $Items.VScan.SummaryItem (!$Items.VScan.Formatted."VScan Status".contains("off")) 5
     # CIFS SVMs Found
     $Items.CIFSSvms.Summary = Add-Summary $Items.CIFSSvms.SummaryItem "True" 5
-  } Else {
+  }
+  else {
     # CIFS SVMs Not Found
     $Items.CIFSSvms.Summary = Add-Summary $Items.CIFSSvms.SummaryItem "No CIFS SVMs Found" 5
   }
 
   # FPolicy
   $Items.FPolicy.FullHeader = $ItemHeaders.FPolicy
-  If ($Items.Fpolicy.Result.num_records -ne 0) {
+  if ($Items.Fpolicy.Result.num_records -ne 0) {
     $Items.Fpolicy.Formatted = ForEach ($_ in $Items.Fpolicy.Result.records) {
       New-Object psobject -Property @{
         VServer       = ($_.vserver).ToString()
@@ -1319,14 +1345,15 @@ function Format-ClusterData {
       }
     }
     $Items.FPolicy.FullData = $Items.Fpolicy.Formatted | Format-Table VServer, "Policy Name", Status, Engine | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.FPolicy.FullData = "`n$Spacer No Results Returned.`n"
   }
   $Items.FPolicy.Summary = Add-Summary $Items.FPolicy.SummaryItem ($Items.Fpolicy.Result.num_records -ne 0) 5
 
   # NAS Auditing
   $Items.NASAuditing.FullHeader = $ItemHeaders.NASAuditing
-  If ($Items.NASAuditing.Result.num_records -ne 0) {
+  if ($Items.NASAuditing.Result.num_records -ne 0) {
     $Items.NASAuditing.Formatted = ForEach ($_ in $Items.NASAuditing.Result.records) {
       New-Object psobject -Property @{
         VServer = ($_.vserver).ToString()
@@ -1334,14 +1361,15 @@ function Format-ClusterData {
       }
     }
     $Items.NASAuditing.FullData = $Items.NASAuditing.Formatted | Format-Table VServer, Enabled | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.NASAuditing.FullData = "`n$Spacer No NAS Auditing Configuration Found.`n"
   }
   $Items.NASAuditing.Summary = Add-Summary $Items.NASAuditing.SummaryItem ($Items.NASAuditing.Result.num_records -ne 0) 5
 
   # NIS
   $Items.NISServers.FullHeader = $ItemHeaders.NISServers
-  If ($Items.NISServers.Result.num_records -ne 0) {
+  if ($Items.NISServers.Result.num_records -ne 0) {
     $Items.NISServers.Formatted = ForEach ($_ in $Items.NISServers.Result.records) {
       New-Object psobject -Property @{
         VServer   = ($_.name).ToString()
@@ -1349,7 +1377,8 @@ function Format-ClusterData {
       }
     }
     $Items.NISServers.FullData = $Items.NISServers.Formatted | Format-Table vserver, nisdomain | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.NISServers.FullData = "`n$Spacer No NIS Configuration Found.`n"
   }
   $Items.NISServers.Summary = Add-Summary $Items.NISServers.SummaryItem ($Items.NISServers.Result.num_records -eq 0) 5
@@ -1358,7 +1387,7 @@ function Format-ClusterData {
   # Begin - Data Protection - Category 6
   # Snapshot Autodeletion
   $Items.SnapShotAutoDelete.FullHeader = $ItemHeaders.SnapShotAutoDelete
-  If ($Items.SnapShotAutoDelete.Result.num_records -ne 0) {
+  if ($Items.SnapShotAutoDelete.Result.num_records -ne 0) {
     $Items.SnapShotAutoDelete.Formatted = ForEach ($_ in $Items.SnapShotAutoDelete.Result.records) {
       New-Object psobject -Property @{
         VServer = ($_.vserver).ToString()
@@ -1367,14 +1396,15 @@ function Format-ClusterData {
       }
     }
     $Items.SnapShotAutoDelete.FullData = $Items.SnapShotAutoDelete.Formatted | Format-Table VServer, Volume, Enabled | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.SnapShotAutoDelete.FullData = "`n$Spacer No Results Returned.`n"
   }
   $Items.SnapShotAutoDelete.Summary = Add-Summary $Items.SnapShotAutoDelete.SummaryItem ($Items.SnapShotAutoDelete.Result.num_records -eq 0) 6
 
   # Snapshot Policy
   $Items.NullSnapShotPolicy.FullHeader = $ItemHeaders.NullSnapShotPolicy
-  If ($Items.NullSnapShotPolicy.Result.num_records -ne 0) {
+  if ($Items.NullSnapShotPolicy.Result.num_records -ne 0) {
     $Items.NullSnapShotPolicy.Formatted = ForEach ($_ in $Items.NullSnapShotPolicy.Result.records) {
       New-Object psobject -Property @{
         Volume            = ($_.volume).ToString()
@@ -1383,10 +1413,11 @@ function Format-ClusterData {
       }
     }
     $Items.NullSnapShotPolicy.FullData = $Items.NullSnapShotPolicy.Formatted | Format-Table volume, "Snapshot Policy", VServer | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.NullSnapShotPolicy.FullData = "`n$Spacer No Volumes with a Snapshot Policy of NULL."
   }
-  If ($Items.NoneSnapShotPolicy.Result.num_records -ne 0) {
+  if ($Items.NoneSnapShotPolicy.Result.num_records -ne 0) {
     $Items.NoneSnapshotPolicy.Formatted = ForEach ($_ in $Items.NoneSnapShotPolicy.Result.records) {
       New-Object psobject -Property @{
         Volume            = ($_.volume).ToString()
@@ -1395,7 +1426,8 @@ function Format-ClusterData {
       }
     }
     $Items.NoneSnapShotPolicy.FullData = $Items.NoneSnapshotPolicy.Formatted | Format-Table volume, "Snapshot Policy", VServer | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.NoneSnapShotPolicy.FullData = "`n$Spacer No Volumes with a Snapshot Policy of None.`n"
   }
   $Items.NullSnapShotPolicy.Summary = Add-Summary $Items.NullSnapShotPolicy.SummaryItem ($Items.NullSnapShotPolicy.Result.num_records -eq 0) 6
@@ -1403,8 +1435,8 @@ function Format-ClusterData {
 
   # Snapshot Locking
   $Items.SnapShotLocking.FullHeader = $ItemHeaders.SnapShotLocking
-  If ($Items.SnapShotLocking.Supported) {
-    If ($Items.SnapShotLocking.Result.num_records -ne 0) {
+  if ($Items.SnapShotLocking.Supported) {
+    if ($Items.SnapShotLocking.Result.num_records -ne 0) {
       $Items.SnapShotLocking.Formatted = ForEach ($_ in $Items.SnapShotLocking.Result.records) {
         New-Object psobject -Property @{
           VServer                    = ($_.vserver).ToString()
@@ -1415,7 +1447,8 @@ function Format-ClusterData {
       $Items.SnapShotLocking.FullData = $Items.SnapShotLocking.Formatted | Format-Table VServer, Volume, "Snapshot Locking Enabled" | Out-String -Stream | Add-Indentation
       $Items.SnapShotLocking.Summary = Add-Summary $Items.SnapShotLocking.SummaryItem (!$Items.SnapShotLocking.Formatted."Snapshot Locking Enabled".contains("False")) 6
     }
-  } Else {
+  }
+  else {
     $Items.SnapShotLocking.FullData = "`n$Spacer Snapshot Copy Locking is not supported in this release. Consider upgrading to 9.12.1 or later.`n"
     $Items.SnapShotLocking.Summary = Add-Summary $Items.SnapShotLocking.SummaryItem "Not available in this release" 6
   }
@@ -1424,8 +1457,8 @@ function Format-ClusterData {
   # Begin - Anti-Ransomware - Category 7
   # SVM Anti-Ransomware
   $Items.SVMAntiRansomware.FullHeader = $ItemHeaders.SVMAntiRansomware
-  If ($Items.SVMAntiRansomware.Supported) {
-    If ($Items.SVMAntiRansomware.Result.num_records -ne 0) {
+  if ($Items.SVMAntiRansomware.Supported) {
+    if ($Items.SVMAntiRansomware.Result.num_records -ne 0) {
       $Items.SVMAntiRansomware.Formatted = ForEach ($_ in $Items.SVMAntiRansomware.Result.records) {
         New-Object psobject -Property @{
           VServer                = ($_.name).ToString()
@@ -1434,19 +1467,21 @@ function Format-ClusterData {
       }
       $Items.SVMAntiRansomware.FullData = $Items.SVMAntiRansomware.Formatted | Format-Table VServer, "Default Volume State" | Out-String -Stream | Add-Indentation
       $Items.SVMAntiRansomware.Summary = Add-Summary $Items.SVMAntiRansomware.SummaryItem (!$Items.SVMAntiRansomware.Formatted."Default Volume State".contains("disabled")) 7
-    } elseif ($Items.SVMs.Result.num_records -eq 0) {
+    }
+    elseif ($Items.SVMs.Result.num_records -eq 0) {
       $Items.SVMAntiRansomware.FullData = "`n$Spacer No Data SVMs Found.`n"
       $Items.SVMAntiRansomware.Summary = Add-Summary $Items.SVMAntiRansomware.SummaryItem "No Data SVMs Found" 7
     }
-  } Else {
+  }
+  else {
     $Items.SVMAntiRansomware.FullData = "`n$Spacer Ransomware Protection is not supported in this release. Consider upgrading to 9.10 or later.`n"
     $Items.SVMAntiRansomware.Summary = Add-Summary $Items.SVMAntiRansomware.SummaryItem "Not available in this release" 7
   }
 
   # Volume Anti-Ransomware
   $Items.VolumeAntiRansomware.FullHeader = $ItemHeaders.VolumeAntiRansomware
-  If ($Items.VolumeAntiRansomware.Supported) {
-    If ($Items.VolumeAntiRansomware.Result.num_records -ne 0) {
+  if ($Items.VolumeAntiRansomware.Supported) {
+    if ($Items.VolumeAntiRansomware.Result.num_records -ne 0) {
       $Items.VolumeAntiRansomware.Formatted = ForEach ($_ in $Items.VolumeAntiRansomware.Result.records) {
         New-Object psobject -Property @{
           VServer                 = ($_.vserver).ToString()
@@ -1456,11 +1491,13 @@ function Format-ClusterData {
       }
       $Items.VolumeAntiRansomware.FullData = $Items.VolumeAntiRansomware.Formatted | Format-Table VServer, Volume, "Anti Ransomware State" | Out-String -Stream | Add-Indentation
       $Items.VolumeAntiRansomware.Summary = Add-Summary $Items.VolumeAntiRansomware.SummaryItem (!$Items.VolumeAntiRansomware.Formatted."Anti Ransomware State".contains("disabled")) 7
-    } elseif ($Items.SVMs.Result.num_records -eq 0) {
+    }
+    elseif ($Items.SVMs.Result.num_records -eq 0) {
       $Items.VolumeAntiRansomware.FullData = "`n$Spacer No Data SVMs Found.`n"
       $Items.VolumeAntiRansomware.Summary = Add-Summary $Items.VolumeAntiRansomware.SummaryItem "No Data SVMs Found" 7
     }
-  } Else {
+  }
+  else {
     $Items.VolumeAntiRansomware.FullData = "`n$Spacer Ransomware Protection is not supported in this release. Consider upgrading to 9.10 or later.`n"
     $Items.VolumeAntiRansomware.Summary = Add-Summary $Items.VolumeAntiRansomware.SummaryItem "Not available in this release" 7
   }
@@ -1469,28 +1506,31 @@ function Format-ClusterData {
   # - Begin - Encryption - Category 8
   # Trusted Platform Module
   $Items.TrustedPlatformModule.FullHeader = $ItemHeaders.TrustedPlatformModule
-  If ($Items.TrustedPlatformModule.Supported -eq $True){
-    If ($Items.TrustedPlatformModule.Result.records.is_available -notcontains "no" -and $Items.TrustedPlatformModule.Result.records.is_available -notcontains $null) {
+  if ($Items.TrustedPlatformModule.Supported -eq $True) {
+    if ($Items.TrustedPlatformModule.Result.records.is_available -notcontains "no" -and $Items.TrustedPlatformModule.Result.records.is_available -notcontains $null) {
       $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Manager is Available for all nodes.`n"
-    } Else {
+    }
+    else {
       $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Manager is not Available for all nodes.`n"
     }
-  } else{
+  }
+  else {
     $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Manager is not available in this release.`n"
   }
   $Items.TrustedPlatformModule.Summary = Add-Summary $Items.TrustedPlatformModule.SummaryItem ($Items.TrustedPlatformModule.Result.records.is_available -notcontains "no" -and $Items.TrustedPlatformModule.Result.records.is_available -notcontains $null) 8
 
   # Key Manager
   $Items.KeyManager.FullHeader = $ItemHeaders.KeyManager
-  If ($Items.KeyManager.Result.num_records -ne 0) {
+  if ($Items.KeyManager.Result.num_records -ne 0) {
     $Items.KeyManager.FullData = "`n$Spacer Key-Manager is configured."
-  } Else {
+  }
+  else {
     $Items.KeyManager.FullData = "`n$Spacer No Key-Manager Found."
   }
   $Items.KeyManager.Summary = Add-Summary $Items.KeyManager.SummaryItem ($Items.KeyManager.Result.num_records -ne 0) 8
 
   # Drive Protection
-  If ($Items.DriveProtection.Result.num_records -ne 0) {
+  if ($Items.DriveProtection.Result.num_records -ne 0) {
     $Items.DriveProtection.Formatted = ForEach ($_ in $Items.DriveProtection.Result.records) {
       New-Object psobject -Property @{
         Aggregate                  = ($_.aggregate).ToString()
@@ -1499,13 +1539,14 @@ function Format-ClusterData {
       }
     }
     $Items.DriveProtection.FullData = $Items.DriveProtection.Formatted | Format-Table Aggregate, Node, "Drive Protection Enabled" | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.DriveProtection.FullData = "`n$Spacer No Results Returned.`n"
   }
   $Items.DriveProtection.Summary = Add-Summary $Items.DriveProtection.SummaryItem (!$Items.DriveProtection.Formatted."Drive Protection Enabled".contains("False")) 8
 
   # Volume Encryption
-  If ($Items.VolumeEncryption.Result.num_records -ne 0) {
+  if ($Items.VolumeEncryption.Result.num_records -ne 0) {
     $Items.VolumeEncryption.Formatted = ForEach ($_ in $Items.VolumeEncryption.Result.records) {
       New-Object psobject -Property @{
         VServer           = ($_.vserver).ToString()
@@ -1515,7 +1556,8 @@ function Format-ClusterData {
       }
     }
     $Items.VolumeEncryption.FullData = $Items.VolumeEncryption.Formatted | Format-Table VServer, Volume, "Encryption Type", "Is Encrypted" | Out-String -Stream | Add-Indentation
-  } Else {
+  }
+  else {
     $Items.VolumeEncryption.FullData = "`n$Spacer No Results Returned.`n"
   }
   $Items.VolumeEncryption.Summary = Add-Summary $Items.VolumeEncryption.SummaryItem (!$Items.VolumeEncryption.Formatted."Is Encrypted".contains("False")) 8
@@ -1525,7 +1567,7 @@ function Format-ClusterData {
 # Output Functions
 # Output to Text File
 function Write-Data {
-  process{
+  process {
     $_ | Tee-Object ".\$Now.txt" -Append
   }
 }
@@ -1539,7 +1581,7 @@ function Show-Header {
 function Show-SummaryOutput {
   $SummaryData = @()
   foreach ($key in $Items.Keys) {
-    if ($($Items[$key].Summary)){
+    if ($($Items[$key].Summary)) {
       $SummaryData += $Items[$key].Summary
     }
   }
@@ -1549,12 +1591,12 @@ function Show-SummaryOutput {
 }
 
 # Output Full Data
-function Show-FullOutput{
+function Show-FullOutput {
   Write-Output "Full Details" | Write-Data
-  foreach ($Index in $Categories.Keys){
+  foreach ($Index in $Categories.Keys) {
     Write-Output "$Separator`n-- $($Categories.$Index) --" | Write-Data
     foreach ($key in $Items.Keys) {
-      if ($($Items[$key].Category) -eq $Index){
+      if ($($Items[$key].Category) -eq $Index) {
         Write-Output $Items[$key].FullHeader | Write-Data
         Write-Output $Items[$key].FullData | Write-Data
       }
