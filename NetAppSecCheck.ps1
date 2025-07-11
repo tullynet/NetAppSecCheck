@@ -27,11 +27,15 @@
   The documents referenced in the KB article linked below should be consulted for the most up to
   date information
 
-    https://kb.netapp.com/onprem/ontap/os/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
-    TR-4569 - https://www.netapp.com/media/10674-tr4569.pdf
-    TR-4572 - https://www.netapp.com/media/7334-tr4572.pdf
-    TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
-    TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
+  https://kb.netapp.com/onprem/ontap/os/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
+  
+  Security Hardening Overview
+    https://docs.netapp.com/us-en/ontap-technical-reports/ontap-security-hardening/security-hardening-overview.html
+  Ransomware Overview
+    https://docs.netapp.com/us-en/ontap-technical-reports/ransomware-solutions/ransomware-overview.html
+  
+  TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
+  TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
 
 .EXAMPLE
 
@@ -58,20 +62,23 @@ Version:
     Concurrent Session Limits
     SSH etm Algorithms
     Trusted Platform Manager
+    Added Supported Protocols to FIPS check
 
   Bug fixes
     Check for presence of data svms prior to Anti-Ransomware checks
     Corrected issues with the IPsecPolicy section
-    Corrected an issue while handing a null hash function for certificate based users
+    Null check before converting data to string
 
   General Changes
     Moved summary item titles into the main "Items" hashtable
     Reworked the CIFS section
     Moved the summary object creation to a function
     Moved the output header text to a hashtable
+    Updated reference documentation links
+    Added a Cluster Details section
 
   Cosmetic Changes
-    Progress indicator during data collection
+    Progress indicator during data collection beacause why not
 
 2.0 - Updated to make future additions more modular. Added additional output for password complexity.
 Bug fixes, formatting.
@@ -108,11 +115,15 @@ $Separator
   The documents referenced in the KB article linked below should be consulted for the most up to
   date information
 
-    https://kb.netapp.com/onprem/ontap/os/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
-    TR-4569 - https://www.netapp.com/media/10674-tr4569.pdf
-    TR-4572 - https://www.netapp.com/media/7334-tr4572.pdf
-    TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
-    TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
+  https://kb.netapp.com/onprem/ontap/os/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
+  
+  Security Hardening Overview
+    https://docs.netapp.com/us-en/ontap-technical-reports/ontap-security-hardening/security-hardening-overview.html
+  Ransomware Overview
+    https://docs.netapp.com/us-en/ontap-technical-reports/ransomware-solutions/ransomware-overview.html
+  
+  TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
+  TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
 $Separator
 "@
 
@@ -168,6 +179,15 @@ $VersionCheck = $Cluster.Version.major + $Cluster.Version.minor / 10
 
 # Data collection item definition
 $Items = [ordered]@{
+  ClusterName             = @{
+    RequiredVersion = 99
+    Category        = 0
+  }
+  ClusterNodes            = @{
+    RequiredVersion = 0
+    Url             = "cluster/nodes?fields=name,model,serial_number"
+    Category        = 0
+  }
   Version                 = @{
     RequiredVersion = 0
     Url             = "cluster"
@@ -187,7 +207,7 @@ $Items = [ordered]@{
   }
   NTPServers              = @{
     RequiredVersion = 6
-    Url             = "private/cli/cluster/time-service/ntp/server"
+    Url             = "private/cli/cluster/time-service/ntp/server?fields=version,is_authentication_enabled"
     Category        = 1
     SummaryItem     = "NTP Servers Configured (3 or More)"
   }
@@ -334,7 +354,7 @@ $Items = [ordered]@{
   }
   FIPS                    = @{
     RequiredVersion = 6
-    Url             = "private/cli/security/config?fields=is_fips_enabled"
+    Url             = "private/cli/security/config?fields=is_fips_enabled,supported_protocols"
     Category        = 4
     SummaryItem     = "FIPS Mode Enabled"
   }
@@ -522,7 +542,7 @@ $Items = [ordered]@{
 
 # Category Definition
 $Categories = [ordered]@{
-  0 = "Software Version"
+  0 = "Cluster Details"
   1 = "General Configuration"
   2 = "Administrative Protocols"
   3 = "Administrative Users"
@@ -542,20 +562,24 @@ Reference: SU2
 https://kb.netapp.com/Support_Bulletins/Customer_Bulletins/SU2
 
 "@
+  ClusterName             = @"
+$Separator
+Cluster Node Details:
+"@
   NTPServers              = @"
 $Separator
 Recommendation: The number of servers configured for NTP should not be less than 3
-Reference: System Manager Insights and TR-4569 section "Network Time Protocol"
+Reference: System Manager Insights and Security Hardening Overview section "Network Time Protocol"
 "@
   ASUPConfig              = @"
 $Separator
 Recommendation: AutoSupport should use a secure protocol (HTTPS) and should be enabled
-Reference: System Manager Insights and TR-4569 section "NetApp AutoSupport"
+Reference: System Manager Insights and Security Hardening Overview section "NetApp AutoSupport"
 "@
   CLITimeout              = @"
 $Separator
 Recommendation: CLI timeout value should match your organization's requirements
-Reference: TR-4569 section "CLI Session Timeout"
+Reference: Security Hardening Overview section "System Administration Methods"
 "@
   ConcurrentSessionLimits = @"
 $Separator
@@ -569,17 +593,17 @@ Reference: TR-4572 section "Cloud Insights"
   LoginBannerConfig       = @"
 $Separator
 Recommendation: The login banner and message of the day (motd) should match your organization's requirements
-Reference: System Manager Insights and TR-4569 section "Login Banners" and "Message of the Day"
+Reference: System Manager Insights and Security Hardening Overview section "System Administration Methods"
 "@
   PasswordConfig          = @"
 $Separator
 Recommendation: Configured password parameters should match your organization's policy
-Reference: TR-4569 section "Password Parameters"
+Reference: Security Hardening Overview section "Login and Password Parameters"
 "@
   LogForwarding           = @"
 $Separator
 Recommendation: Offloading of syslog information should be configured
-Reference: TR-4569 section "Sending out Syslog"
+Reference: Security Hardening Overview section "Storage Administrative System Auditing"
 "@
   SystemConfigBackup      = @"
 $Separator
@@ -592,18 +616,18 @@ Recommendation: HTTP should be disabled
   ManagementProtocols     = @"
 $Separator
 Recommendation: Telnet and Remote Shell (RSH) should be disabled
-Reference: System Manager Insights and TR-4569 section "Application Methods"
+Reference: System Manager Insights and Security Hardening Overview section "Roles, Applications, and Authentication"
 "@
   BuiltinUsers            = @"
 $Separator
 Recommendation: Built in accounts should be locked
-Reference: System Manager Insights and TR-4569 section "Default Administrative Accounts"
+Reference: System Manager Insights and Security Hardening Overview section "Default Administrative Accounts"
 "@
   RestRoles               = @"
 $Separator
 Recommendation: You can prevent ONTAP administrators from using REST APIs for file access by setting access level
                 for /api/storage/volumes to none
-Reference: TR-4569 section "Effect of REST APIs on NAS Auditing"
+Reference: Security Hardening Overview section "Effect of REST APIs on NAS Auditing"
 "@
   UserDetails             = @"
 $Separator
@@ -612,13 +636,14 @@ Recommendation: For each login the authentication-method should be public key fo
                 The second-authentication-method should not be none to enable MFA
                 The role should be appropriate to grant them privilege to perform their job function or required task
                 The hash-function should be sha512
-Reference: TR-4569 section "SHA-512 Support" and "Managing SSHv2" and "Roles, Applications, and Authentication" and
+Reference: Security Hardening Overview section "SHA-512 Support", "Managing SSHv2"
+           "Roles, Applications, and Authentication", and
            TR-4647 section "ONTAP SSH Two-Factor Chained Authentication"
 "@
   MultiAdminVerify        = @"
 $Separator
 Recommendation: Multi-Admin Verification should be enabled
-Reference: TR-4569 section "Multi-Admin Verification"
+Reference: Security Hardening Overview section "Multi-Admin Verification"
 "@
   SNMPUsers               = @"
 $Separator
@@ -627,22 +652,22 @@ Recommendation: SNMP Users shoud not use an authentication method of community
   RSHUsers                = @"
 $Separator
 Recommendation: No logins should exist with the Telnet or RSH application
-Reference: TR-4569 section "Application Methods"
+Reference: Security Hardening Overview section "Application Methods"
 "@
   ClusterPeerEncryption   = @"
 $Separator
 Recommendation: Cluster peers should be configured with tls-psk for the encryption protocol
-Reference: TR-4569 section "Data Replication Encryption"
+Reference: Security Hardening Overview section "Data Replication Encryption"
 "@
   FIPS                    = @"
 $Separator
 Recommendation: FIPS Mode should be enabled
-Reference: System Manager Insights and TR-4569 section "Managing TLS and SSL"
+Reference: System Manager Insights and Security Hardening Overview section "Managing TLS and SSL"
 "@
   IPSec                   = @"
 $Separator
 Recommendation: When required IPsec is configured and policies created
-Reference: TR-4569 section "IPsec Data-in-flight Encryption"
+Reference: Security Hardening Overview section "IPsec Data-in-flight Encryption"
 "@
   SSHCiphers              = @"
 $Separator
@@ -661,26 +686,26 @@ $Spacer Problematic Algorithms:
   SelfSignedCerts         = @"
 $Separator
 Recommendation: On production systems no self-signed ceritficates should exist
-Reference: TR-4569 section "Creating a CA-Signed Digital Certificate"
+Reference: Security Hardening Overview section "Creating a CA-Signed Digital Certificate"
 "@
   ExpiredCerts            = @"
 $Separator
 Recommendation: On production systems no expired ceritficates should exist
-Reference: TR-4569 section "Creating a CA-Signed Digital Certificate"
+Reference: Security Hardening Overview section "Creating a CA-Signed Digital Certificate"
            https://kb.netapp.com/on-prem/ontap/Ontap_OS/OS-KBs/How_to_renew_a_Self-Signed_SSL_certificate_in_ONTAP_9
 "@
   SSLConfig               = @"
 $Separator
 Recommendation: For any SVM with client-enabled access, all related logins that are performing SDK or REST API calls
                 should use cert for Authentication Method field
-Reference: TR-4569 section "Certificate-based API access"
+Reference: Security Hardening Overview section "Certificate-based API access"
 
 $Spacer SSL Configuration
 "@
   OCSPConfig              = @"
 $Separator
 Recommendation: OCSP should be enabled
-Reference: TR-4569 section "Online Certificate Status Protocol"
+Reference: Security Hardening Overview section "Online Certificate Status Protocol"
 "@
   SAML                    = @"
 $Separator
@@ -690,7 +715,7 @@ Reference: TR-4647 section "The requirement for strong administrative credential
   CIFSSigning             = @"
 $Separator
 Recommendation: For each SVM configured with CIFS the is-signing-required should be true
-Reference: TR-4569 section "CIFS SMB Signing and Sealing"
+Reference: Security Hardening Overview section "CIFS SMB Signing and Sealing"
 "@
   CIFSWorkgroup           = @"
 $Separator
@@ -718,12 +743,12 @@ Reference: System Manager Insights
   NASAuditing             = @"
 $Separator
 Recommendation: NAS auditing should be enabled
-Reference: TR-4569 section "NAS File System Auditing"
+Reference: Security Hardening Overview section "NAS File System Auditing"
 "@
   NISServers              = @"
 $Separator
 Recommendation: NIS should not be configured
-Reference: TR-4569 section "Authentication Methods"
+Reference: Security Hardening Overview section "Authentication Methods"
 "@
   SnapShotAutoDelete      = @"
 $Separator
@@ -738,7 +763,7 @@ Reference: System Manager Insights
   SnapShotLocking         = @"
 $Separator
 Recommendation: snapshot-locking-enabled should be true for all volumes with snapshots
-Reference: TR-4569 section "Snapshot Copy Locking"
+Reference: Security Hardening Overview section "Snapshot Copy Locking"
 "@
   SVMAntiRansomware       = @"
 $Separator
@@ -754,14 +779,14 @@ Reference: System Manager Insights
 $Separator
 Recommendation: Platforms with a TPM chip and TPM license will generate and seal the node key encryption key to
                 protect the highest level of the OKM keying hierarchy in ONTAP 9.8 and later.
-Reference: TR-4569 section "Storage Encryption"
+Reference: Security Hardening Overview section "Storage Encryption"
            https://kb.netapp.com/on-prem/ontap/OHW/OHW-KBs/What_is_Trusted_Platform_Module_(TPM)
 "@
   KeyManager              = @"
 $Separator
 Recommendation: A Key-Manager should be configured and encryption should be enabled at either the disk, aggregate,
                 or volume layer
-Reference: TR-4569 section "Storage Encryption"
+Reference: Security Hardening Overview section "Storage Encryption"
 "@
 }
 
@@ -786,27 +811,64 @@ function Add-Summary {
     Topic   = $Categories[$Category]
   }
 }
+function Convert-ToStringOrNull {
+  param (
+    [Parameter(Mandatory = $false)]
+    $InputObject
+  )
+  if ($null -ne $InputObject) {
+    return $InputObject.ToString()
+  }
+  else {
+    return $null
+  }
+}
+
+function New-FormattedObject {
+  param (
+    [hashtable]$PropertyMap
+  )
+  $converted = @{}
+  foreach ($key in $PropertyMap.Keys) {
+    $converted[$key] = Convert-ToStringOrNull $PropertyMap[$key]
+  }
+  return [pscustomobject]$converted
+}
 
 # Process and Format Data
 function Format-ClusterData {
-  # Begin - Software Version - Category 0
+  # Begin - Cluster Details - Category 0
+  # Cluster Info
+  $Items.ClusterName.FullHeader = $ItemHeaders.ClusterName
+  $Items.ClusterName.FullData = "`n$Spacer Cluster Name: $($Items.Version.Result.name)"
+  $Items.ClusterNodes.Formatted = ForEach ($record in $Items.ClusterNodes.Result.records) {
+    New-FormattedObject @{
+      "Node Name"     = $record.name
+      Model           = $record.model
+      "Serial Number" = $record.serial_number
+    }
+  }
+  $Items.ClusterNodes.FullData = $Items.ClusterNodes.Formatted | Format-Table "Node Name", Model, "Serial Number" | Out-String -Stream | Add-Indentation
+
   # ONTAP Version
   $Items.Version.FullHeader = $ItemHeaders.Version
   $Items.Version.FullData = "$Spacer ONTAP Version: $Version`n$Spacer Data at rest encryption supported: $($Items.DataAtRestEncryption.Result.onboard_key_manager_configurable_status.supported)`n"
   $Items.Version.Summary = Add-Summary $Items.Version.SummaryItem $VerSplit[0] 0
   $Items.DataAtRestEncryption.Summary = Add-Summary $Items.DataAtRestEncryption.SummaryItem $Items.DataAtRestEncryption.Result.onboard_key_manager_configurable_status.supported 0
-  # End - Software Version - Category 0
+  # End - Cluster Details - Category 0
 
   # Begin - General Configuration - Category 1
   # NTP Servers
   $Items.NTPServers.FullHeader = $ItemHeaders.NTPServers
   if ($Items.NTPServers.Result.num_records -ne 0) {
-    $Items.NTPServers.Formatted = ForEach ($_ in $Items.NTPServers.Result.records) {
-      New-Object psobject -Property @{
-        "NTP Servers" = ($_.Server).ToString()
+    $Items.NTPServers.Formatted = ForEach ($record in $Items.NTPServers.Result.records) {
+      New-FormattedObject @{
+        "NTP Servers" = $record.Server
+        Version = $record.Version
+        "Authentication Enabled" = $record.is_authentication_enabled
       }
     }
-    $Items.NTPServers.FullData = $Items.NTPServers.Formatted | Format-Table "NTP Servers" | Out-String -Stream | Add-Indentation
+    $Items.NTPServers.FullData = $Items.NTPServers.Formatted | Format-Table "NTP Servers", Version, "Authentication Enabled" | Out-String -Stream | Add-Indentation
   }
   else {
     $Items.NTPServers.FullData = "`n$Spacer No NTP Servers Found.`n"
@@ -815,10 +877,10 @@ function Format-ClusterData {
 
   # ASUP Config
   $Items.ASUPConfig.FullHeader = $ItemHeaders.ASUPConfig
-  $Items.ASUPConfig.Formatted = ForEach ($_ in $Items.ASUPConfig.Result) {
-    New-Object psobject -Property @{
-      Transport = ($_.transport).ToString()
-      Enabled   = ($_.enabled).ToString()
+  $Items.ASUPConfig.Formatted = ForEach ($record in $Items.ASUPConfig.Result) {
+    New-FormattedObject @{
+      Transport = $record.transport
+      Enabled   = $record.enabled
     }
   }
   $Items.ASUPConfig.FullData = $Items.ASUPConfig.Formatted | Format-Table Transport, Enabled | Out-String -Stream | Add-Indentation
@@ -832,11 +894,11 @@ function Format-ClusterData {
 
   # Concurrent Session Limits
   $Items.ConcurrentSessionLimits.FullHeader = $ItemHeaders.ConcurrentSessionLimits
-  $Items.ConcurrentSessionLimits.Formatted = ForEach ($_ in $Items.ConcurrentSessionLimits.Result.records) {
-    New-Object psobject -Property @{
-      Interface = ($_.interface).ToString()
-      Category  = ($_.category).ToString()
-      MaxActive = ($_.max_active_limit).ToString()
+  $Items.ConcurrentSessionLimits.Formatted = ForEach ($record in $Items.ConcurrentSessionLimits.Result.records) {
+    New-FormattedObject @{
+      Interface = $record.interface
+      Category  = $record.category
+      MaxActive = $record.max_active_limit
     }
   }
   $Items.ConcurrentSessionLimits.FullData = $Items.ConcurrentSessionLimits.Formatted | Format-Table Interface, Category, MaxActive | Out-String -Stream | Add-Indentation
@@ -868,22 +930,22 @@ function Format-ClusterData {
 
   # Password Complexity
   $Items.PasswordConfig.FullHeader = $ItemHeaders.PasswordConfig
-  $Items.PasswordConfig.Formatted = ForEach ($_ in $Items.PasswordConfig.Result.records) {
-    New-Object psobject -Property @{
-      VServer            = ($_.vserver).ToString()
-      Role               = ($_.role).ToString()
-      Alphanumeric       = ($_.passwd_alphanum).ToString()
-      "Min Len"          = ($_.passwd_minlength).ToString()
-      "Min Spec Chars"   = ($_.passwd_min_special_chars).ToString()
-      "Min Lowercase"    = ($_.passwd_min_lowercase_chars).ToString()
-      "Min Uppercase"    = ($_.passwd_min_uppercase_chars).ToString()
-      "Min Digits"       = ($_.passwd_min_digits).ToString()
-      "Before Reuse"     = ($_.disallowed_reuse).ToString()
-      "Expiry Time"      = ($_.passwd_expiry_time).ToString()
-      "Expiry Warn"      = ($_.passwd_expiry_warn_time).ToString()
-      "Age Before Chg"   = ($_.change_delay).ToString()
-      "ChgOnLogin"       = ($_.require_initial_passwd_update).ToString()
-      "Lockout Duration" = ($_.lockout_duration).ToString()
+  $Items.PasswordConfig.Formatted = ForEach ($record in $Items.PasswordConfig.Result.records) {
+    New-FormattedObject @{
+      VServer            = $record.vserver
+      Role               = $record.role
+      Alphanumeric       = $record.passwd_alphanum
+      "Min Len"          = $record.passwd_minlength
+      "Min Spec Chars"   = $record.passwd_min_special_chars
+      "Min Lowercase"    = $record.passwd_min_lowercase_chars
+      "Min Uppercase"    = $record.passwd_min_uppercase_chars
+      "Min Digits"       = $record.passwd_min_digits
+      "Before Reuse"     = $record.disallowed_reuse
+      "Expiry Time"      = $record.passwd_expiry_time
+      "Expiry Warn"      = $record.passwd_expiry_warn_time
+      "Age Before Chg"   = $record.change_delay
+      "ChgOnLogin"       = $record.require_initial_passwd_update
+      "Lockout Duration" = $record.lockout_duration
     }
   }
   $Items.PasswordConfig.FullData = $Items.PasswordConfig.Formatted | Format-Table vserver, role, Alphanumeric, "Min Len", "Min Spec Chars", "Min Lowercase", "Min Uppercase", "Min Digits" | Out-String -Stream | Add-Indentation
@@ -893,10 +955,10 @@ function Format-ClusterData {
   # Log Forwarding
   $Items.LogForwarding.FullHeader = $ItemHeaders.LogForwarding
   if ($Items.LogForwarding.Result.num_records -ne 0) {
-    $Items.LogForwarding.Formatted = ForEach ($_ in $Items.LogForwarding.Result.records) {
-      New-Object psobject -Property @{
-        Destination = ($_.Destination).ToString()
-        Port        = ($_.Port).ToString()
+    $Items.LogForwarding.Formatted = ForEach ($record in $Items.LogForwarding.Result.records) {
+      New-FormattedObject @{
+        Destination = $record.Destination
+        Port        = $record.Port
       }
     }
     $Items.LogForwarding.FullData = $Items.LogForwarding.Formatted | Format-Table Destination, Port | Out-String -Stream | Add-Indentation
@@ -925,10 +987,10 @@ function Format-ClusterData {
 
   # Management Protocols
   $Items.ManagementProtocols.FullHeader = $ItemHeaders.ManagementProtocols
-  $Items.ManagementProtocols.Formatted = ForEach ($_ in $Items.ManagementProtocols.Result.records) {
-    New-Object psobject -Property @{
-      Application = ($_.application).ToString()
-      Enabled     = ($_.enabled).ToString()
+  $Items.ManagementProtocols.Formatted = ForEach ($record in $Items.ManagementProtocols.Result.records) {
+    New-FormattedObject @{
+      Application = $record.application
+      Enabled     = $record.enabled
     }
   }
   $Items.ManagementProtocols.FullData = $Items.ManagementProtocols.Formatted | Format-Table Application, Enabled | Out-String -Stream | Add-Indentation
@@ -940,10 +1002,10 @@ function Format-ClusterData {
   # Built in accounts
   $Items.BuiltinUsers.FullHeader = $ItemHeaders.BuiltinUsers
   $Items.BuiltinUsers.Builtin = $Items.BuiltinUsers.Result.records + $Items.DiagUser.Result.records
-  $Items.BuiltinUsers.Formatted = ForEach ($_ in $Items.BuiltinUsers.Builtin) {
-    New-Object psobject -Property @{
-      Username = ($_.name).ToString()
-      Locked   = ($_.locked).ToString()
+  $Items.BuiltinUsers.Formatted = ForEach ($record in $Items.BuiltinUsers.Builtin) {
+    New-FormattedObject @{
+      Username = $record.name
+      Locked   = $record.locked
     }
   }
   $Items.BuiltinUsers.FullData = $Items.BuiltinUsers.Formatted | Format-Table Username, Locked | Out-String -Stream | Add-Indentation
@@ -952,12 +1014,12 @@ function Format-ClusterData {
   # REST Roles
   $Items.RestRoles.FullHeader = $ItemHeaders.RestRoles
   if ($Items.RestRoles.Supported) {
-    $Items.RestRoles.Formatted = ForEach ($_ in $Items.RestRoles.Result.records) {
-      New-Object psobject -Property @{
-        VServer = ($_.vserver).ToString()
-        Role    = ($_.role).ToString()
-        API     = ($_.api).ToString()
-        Access  = ($_.Access).ToString()
+    $Items.RestRoles.Formatted = ForEach ($record in $Items.RestRoles.Result.records) {
+      New-FormattedObject @{
+        VServer = $record.vserver
+        Role    = $record.role
+        API     = $record.api
+        Access  = $record.Access
       }
     }
     $Items.RestRoles.FullData = $Items.RestRoles.Formatted | Format-Table VServer, Role, API, Access | Out-String -Stream | Add-Indentation
@@ -968,16 +1030,16 @@ function Format-ClusterData {
 
   # User Details
   $Items.UserDetails.FullHeader = $ItemHeaders.UserDetails
-  $Items.UserDetails.Formatted = ForEach ($_ in $Items.UserDetails.Result.records) {
-    New-Object psobject -Property @{
-      Username        = ($_.user_or_group_name).ToString()
-      VServer         = ($_.vserver).ToString()
-      Application     = ($_.application).ToString()
-      "Role Name"     = ($_.role).ToString()
-      AuthMethod      = ($_.authentication_method).ToString()
-      "2ndAuthMethod" = ($_.second_authentication_method).ToString()
-      Locked          = ($_.is_account_locked)
-      "Hash Function" = ($_.hash_function)
+  $Items.UserDetails.Formatted = ForEach ($record in $Items.UserDetails.Result.records) {
+    New-FormattedObject @{
+      Username        = $record.user_or_group_name
+      VServer         = $record.vserver
+      Application     = $record.application
+      "Role Name"     = $record.role
+      AuthMethod      = $record.authentication_method
+      "2ndAuthMethod" = $record.second_authentication_method
+      Locked          = $record.is_account_locked
+      "Hash Function" = $record.hash_function
     }
   }
   $Items.UserDetails.FullData = $Items.UserDetails.Formatted | Format-Table username, vserver, application, "role name", authmethod, "2ndAuthMethod", Locked, "Hash Function" | Out-String -Stream | Add-Indentation
@@ -985,9 +1047,9 @@ function Format-ClusterData {
   # Multi-Admin Verification
   $Items.MultiAdminVerify.FullHeader = $ItemHeaders.MultiAdminVerify
   if ($Items.MultiAdminVerify.Supported) {
-    $Items.MultiAdminVerify.Formatted = New-Object psobject -Property @{
-      Enabled              = ($Items.MultiAdminVerify.Result.enabled).ToString()
-      "Required Approvers" = ($Items.MultiAdminVerify.Result.required_approvers).ToString()
+    $Items.MultiAdminVerify.Formatted = New-FormattedObject @{
+      Enabled              = $Items.MultiAdminVerify.Result.enabled
+      "Required Approvers" = $Items.MultiAdminVerify.Result.required_approvers
     }
     $Items.MultiAdminVerify.FullData = $Items.MultiAdminVerify.Formatted | Format-Table Enabled, "Required Approvers" | Out-String -Stream | Add-Indentation
     $Items.MultiAdminVerify.Summary = Add-Summary $Items.MultiAdminVerify.SummaryItem $Items.MultiAdminVerify.Result.enabled 3
@@ -1000,12 +1062,12 @@ function Format-ClusterData {
   # SNMP Users
   $Items.SNMPUsers.FullHeader = $ItemHeaders.SNMPUsers
   if ($Items.SNMPUsers.Result.num_records -ne 0) {
-    $Items.SNMPUsers.Formatted = ForEach ($_ in $Items.SNMPUsers.Result.records) {
-      New-Object psobject -Property @{
-        VServer     = ($_.vserver).ToString()
-        Username    = ($_.user_or_group_name).ToString()
-        Application = ($_.application).ToString()
-        AuthMethod  = ($_.authentication_method).ToString()
+    $Items.SNMPUsers.Formatted = ForEach ($record in $Items.SNMPUsers.Result.records) {
+      New-FormattedObject @{
+        VServer     = $record.vserver
+        Username    = $record.user_or_group_name
+        Application = $record.application
+        AuthMethod  = $record.authentication_method
       }
     }
     $Items.SNMPUsers.FullData = $Items.SNMPUserss.Formatted | Format-Table username, vserver, application, authmethod | Out-String -Stream | Add-Indentation
@@ -1018,15 +1080,15 @@ function Format-ClusterData {
   # RSH and Telnet Users
   $Items.RSHUsers.FullHeader = $ItemHeaders.RSHUsers
   if ($Items.RSHUsers.Result.num_records -ne 0) {
-    $Items.RSHUsers.Formatted = ForEach ($_ in $Items.RSHUsers.Result.records) {
-      New-Object psobject -Property @{
-        VServer         = ($_.vserver).ToString()
-        Username        = ($_.user_or_group_name).ToString()
-        Application     = ($_.application).ToString()
-        AuthMethod      = ($_.authentication_method).ToString()
-        "Role Name"     = ($_.role).ToString()
-        Locked          = ($_.is_account_locked).ToString()
-        "2ndAuthMethod" = ($_.second_authentication_method).ToString()
+    $Items.RSHUsers.Formatted = ForEach ($record in $Items.RSHUsers.Result.records) {
+      New-FormattedObject @{
+        VServer         = $record.vserver
+        Username        = $record.user_or_group_name
+        Application     = $record.application
+        AuthMethod      = $record.authentication_method
+        "Role Name"     = $record.role
+        Locked          = $record.is_account_locked
+        "2ndAuthMethod" = $record.second_authentication_method
       }
     }
     $Items.RSHUsers.FullData = $Items.RSHUsers.Formatted | Format-Table username, vserver, application, "role name", authmethod, "2ndAuthMethod", Locked | Out-String -Stream | Add-Indentation
@@ -1036,15 +1098,15 @@ function Format-ClusterData {
   }
   $Items.RSHUsers.Summary = Add-Summary $Items.RSHUsers.SummaryItem ($Items.RSHUsers.Result.num_records -eq 0) 3
   if ($Items.TelnetUsers.Result.num_records -ne 0) {
-    $Items.TelnetUsers.Formatted = ForEach ($_ in $Items.TelnetUsers.Result.records) {
-      New-Object psobject -Property @{
-        VServer         = ($_.vserver).ToString()
-        Username        = ($_.user_or_group_name).ToString()
-        Application     = ($_.application).ToString()
-        AuthMethod      = ($_.authentication_method).ToString()
-        "Role Name"     = ($_.role).ToString()
-        Locked          = ($_.is_account_locked).ToString()
-        "2ndAuthMethod" = ($_.second_authentication_method).ToString()
+    $Items.TelnetUsers.Formatted = ForEach ($record in $Items.TelnetUsers.Result.records) {
+      New-FormattedObject @{
+        VServer         = $record.vserver
+        Username        = $record.user_or_group_name
+        Application     = $record.application
+        AuthMethod      = $record.authentication_method
+        "Role Name"     = $record.role
+        Locked          = $record.is_account_locked
+        "2ndAuthMethod" = $record.second_authentication_method
       }
     }
     $Items.TelnetUsers.FullData = $Items.TelnetUsers.Formatted | Format-Table username, vserver, application, "role name", authmethod, "2ndAuthMethod", Locked | Out-String -Stream | Add-Indentation
@@ -1059,10 +1121,10 @@ function Format-ClusterData {
   # Cluster Peer Details
   $Items.ClusterPeerEncryption.FullHeader = $ItemHeaders.ClusterPeerEncryption
   if ($Items.ClusterPeerEncryption.Result.num_records -ne 0) {
-    $Items.ClusterPeerEncryption.Formatted = ForEach ($_ in $Items.ClusterPeerEncryption.Result.records) {
-      New-Object psobject -Property @{
-        Cluster               = ($_.cluster).ToString()
-        "Encryption Protocol" = ($_.encryption_protocol).ToString()
+    $Items.ClusterPeerEncryption.Formatted = ForEach ($record in $Items.ClusterPeerEncryption.Result.records) {
+      New-FormattedObject @{
+        Cluster               = $record.cluster
+        "Encryption Protocol" = $record.encryption_protocol
       }
     }
     $Items.ClusterPeerEncryption.FullData = $Items.ClusterPeerEncryption.Formatted | Format-Table Cluster, "Encryption Protocol" | Out-String -Stream | Add-Indentation
@@ -1075,13 +1137,14 @@ function Format-ClusterData {
 
   # FIPS
   $Items.FIPS.FullHeader = $ItemHeaders.FIPS
-  $Items.FIPS.Formatted = ForEach ($_ in $Items.FIPS.Result.records) {
-    New-Object psobject -Property @{
-      Interface      = ($_.interface).ToString()
-      "FIPS Enabled" = ($_.is_fips_enabled).ToString()
+  $Items.FIPS.Formatted = ForEach ($record in $Items.FIPS.Result.records) {
+    New-FormattedObject @{
+      Interface             = $record.interface
+      "FIPS Enabled"        = $record.is_fips_enabled
+      "Supported Protocols" = $record.supported_protocols -join ","
     }
   }
-  $Items.FIPS.FullData = $Items.FIPS.Formatted | Format-Table Interface, "FIPS Enabled" | Out-String -Stream | Add-Indentation
+  $Items.FIPS.FullData = $Items.FIPS.Formatted | Format-Table Interface, "FIPS Enabled", "Supported Protocols" | Out-String -Stream | Add-Indentation
   $Items.FIPS.Summary = Add-Summary $Items.FIPS.SummaryItem $Items.FIPS.Result.records.is_fips_enabled 4
 
   # IPSec
@@ -1106,13 +1169,13 @@ function Format-ClusterData {
   # Problematic Ciphers
   $Items.SSHCiphers.FullHeader = $ItemHeaders.SSHCiphers
   if ($Items.SSHCiphers.Result.num_records -ne 0) {
-    ForEach ($_ in $Items.SSHCiphers.Result.records) {
-      $Items.SSHCiphers.VServer = $_.vserver
-      $Items.SSHCiphers.Ciphers = $_.ciphers -split ","
+    ForEach ($record in $Items.SSHCiphers.Result.records) {
+      $Items.SSHCiphers.VServer = $record.vserver
+      $Items.SSHCiphers.Ciphers = $record.ciphers -split ","
       $Items.SSHCiphers.Formatted = @()
-      ForEach ($_ in $Items.SSHCiphers.Ciphers) {
-        if ($_.contains("cbc")) {
-          $Items.SSHCiphers.Formatted += New-Object -TypeName psobject -Property @{VServer = $Items.SSHCiphers.VServer; Cipher = $_ }
+      ForEach ($cipher in $Items.SSHCiphers.Ciphers) {
+        if ($cipher.contains("cbc")) {
+          $Items.SSHCiphers.Formatted += New-Object -TypeName psobject -Property @{VServer = $Items.SSHCiphers.VServer; Cipher = $cipher }
         }
       }
     }
@@ -1126,13 +1189,13 @@ function Format-ClusterData {
   # Problematic Algorithms
   $Items.SSHAlgorithms.FullHeader = $ItemHeaders.SSHAlgorithms
   if ($Items.SSHAlgorithms.Result.num_records -ne 0) {
-    ForEach ($_ in $Items.SSHAlgorithms.Result.records) {
-      $Items.SSHAlgorithms.VServer = $_.vserver
-      $Items.SSHAlgorithms.Algorithms = $_.mac_algorithms -split ","
+    ForEach ($record in $Items.SSHAlgorithms.Result.records) {
+      $Items.SSHAlgorithms.VServer = $record.vserver
+      $Items.SSHAlgorithms.Algorithms = $record.mac_algorithms -split ","
       $Items.SSHAlgorithms.Formatted = @()
-      ForEach ($_ in $Items.SSHAlgorithms.Algorithms) {
-        if ($_.contains("etm")) {
-          $Items.SSHAlgorithms.Formatted += New-Object -TypeName psobject -Property @{VServer = $Items.SSHAlgorithms.VServer; Algorithm = $_ }
+      ForEach ($algorithm in $Items.SSHAlgorithms.Algorithms) {
+        if ($algorithm.contains("etm")) {
+          $Items.SSHAlgorithms.Formatted += New-Object -TypeName psobject -Property @{VServer = $Items.SSHAlgorithms.VServer; Algorithm = $algorithm }
         }
       }
     }
@@ -1146,14 +1209,14 @@ function Format-ClusterData {
   # Self-Signed Certificates
   $Items.SelfSignedCerts.FullHeader = $ItemHeaders.SelfSignedCerts
   if ($Items.SelfSignedCerts.Result.num_records -ne 0) {
-    $Items.SelfSignedCerts.Formatted = ForEach ($_ in $Items.SelfSignedCerts.Result.records) {
-      New-Object psobject -Property @{
-        VServer       = ($_.vserver).ToString()
-        CommonName    = ($_.common_name).ToString()
-        Serial        = ($_.serial).ToString()
-        CA            = ($_.ca).ToString()
-        Type          = ($_.type).ToString()
-        "Self-Signed" = ($_.self_signed).ToString()
+    $Items.SelfSignedCerts.Formatted = ForEach ($record in $Items.SelfSignedCerts.Result.records) {
+      New-FormattedObject @{
+        VServer       = $record.vserver
+        CommonName    = $record.common_name
+        Serial        = $record.serial
+        CA            = $record.ca
+        Type          = $record.type
+        "Self-Signed" = $record.self_signed
       }
     }
     $Items.SelfSignedCerts.FullData = $Items.SelfSignedCerts.Formatted | Format-Table Vserver, CommonName, Serial, CA, Type, "Self-Signed" | Out-String -Stream | Add-Indentation
@@ -1165,12 +1228,12 @@ function Format-ClusterData {
 
   # Expired Certificates
   $Items.ExpiredCerts.FullHeader = $ItemHeaders.ExpiredCerts
-  $Items.ExpiredCerts.Formatted = ForEach ($_ in $Items.ExpiredCerts.Result.records) {
-    if ($_.expiration -lt (Get-Date)) {
-      New-Object psobject -Property @{
-        VServer    = ($_.vserver).ToString()
-        CommonName = ($_.common_name).ToString()
-        Expiration = ($_.expiration).ToString()
+  $Items.ExpiredCerts.Formatted = ForEach ($record in $Items.ExpiredCerts.Result.records) {
+    if ($record.expiration -lt (Get-Date)) {
+      New-FormattedObject @{
+        VServer    = $record.vserver
+        CommonName = $record.common_name
+        Expiration = $record.expiration
       }
     }
   }
@@ -1184,28 +1247,28 @@ function Format-ClusterData {
 
   # SSL Client, HTTP, and ONTAPI Users
   $Items.SSLConfig.FullHeader = $ItemHeaders.SSLConfig
-  $Items.SSLConfig.Formatted = ForEach ($_ in $Items.SSLConfig.Result.records) {
-    New-Object psobject -Property @{
-      VServer          = ($_.vserver).ToString()
-      "Client Enabled" = ($_.client_enabled).ToString()
+  $Items.SSLConfig.Formatted = ForEach ($record in $Items.SSLConfig.Result.records) {
+    New-FormattedObject @{
+      VServer          = $record.vserver
+      "Client Enabled" = $record.client_enabled
     }
   }
   $Items.SSLConfig.FullData = $Items.SSLConfig.Formatted | Format-Table VServer, "Client Enabled" | Out-String -Stream | Add-Indentation
   $Items.SSLConfig.Summary = Add-Summary $Items.SSLConfig.SummaryItem (!$Items.SSLConfig.Formatted."Client Enabled".contains("True)")) 4
-  $Items.HTTPUsers.Formatted = ForEach ($_ in $Items.HTTPUsers.Result.records) {
-    New-Object psobject -Property @{
-      VServer     = ($_.vserver).ToString()
-      Username    = ($_.user_or_group_name).ToString()
-      Application = ($_.application).ToString()
-      AuthMethod  = ($_.authentication_method).ToString()
+  $Items.HTTPUsers.Formatted = ForEach ($record in $Items.HTTPUsers.Result.records) {
+    New-FormattedObject @{
+      VServer     = $record.vserver
+      Username    = $record.user_or_group_name
+      Application = $record.application
+      AuthMethod  = $record.authentication_method
     }
   }
-  $Items.ONTAPIUsers.Formatted = ForEach ($_ in $Items.ONTAPIUsers.Result.records) {
-    New-Object psobject -Property @{
-      VServer     = ($_.vserver).ToString()
-      Username    = ($_.user_or_group_name).ToString()
-      Application = ($_.application).ToString()
-      AuthMethod  = ($_.authentication_method).ToString()
+  $Items.ONTAPIUsers.Formatted = ForEach ($record in $Items.ONTAPIUsers.Result.records) {
+    New-FormattedObject @{
+      VServer     = $record.vserver
+      Username    = $record.user_or_group_name
+      Application = $record.application
+      AuthMethod  = $record.authentication_method
     }
   }
   if ($Items.HTTPUsers.Result.records.num_records -ne 0) {
@@ -1225,10 +1288,10 @@ function Format-ClusterData {
 
   # OCSP
   $Items.OCSPConfig.FullHeader = $ItemHeaders.OCSPConfig
-  $Items.OCSPConfig.Formatted = ForEach ($_ in $Items.OCSPConfig.Result.records) {
-    New-Object psobject -Property @{
-      Application    = ($_.application).ToString()
-      "OCSP Enabled" = ($_.is_ocsp_enabled).ToString()
+  $Items.OCSPConfig.Formatted = ForEach ($record in $Items.OCSPConfig.Result.records) {
+    New-FormattedObject @{
+      Application    = $record.application
+      "OCSP Enabled" = $record.is_ocsp_enabled
     }
   }
   $Items.OCSPConfig.FullData = $Items.OCSPConfig.Formatted | Format-Table Application, "OCSP Enabled" | Out-String -Stream | Add-Indentation
@@ -1237,11 +1300,11 @@ function Format-ClusterData {
   # SAML
   $Items.SAML.FullHeader = $ItemHeaders.SAML
   if ($Items.SAML.Result.records.num_records -ne 0) {
-    $Items.SAML.Formatted = ForEach ($_ in $Items.SAML.Result.records) {
-      New-Object psobject -Property @{
-        Node    = ($_.node).ToString()
-        Status  = ($_.status).ToString()
-        Enabled = ($_.is_enabled).ToString()
+    $Items.SAML.Formatted = ForEach ($record in $Items.SAML.Result.records) {
+      New-FormattedObject @{
+        Node    = $record.node
+        Status  = $record.status
+        Enabled = $record.is_enabled
       }
     }
     $Items.SAML.FullData = $Items.SAML.Formatted | Format-Table Node, Status, Enabled | Out-String -Stream | Add-Indentation
@@ -1259,10 +1322,10 @@ function Format-ClusterData {
   if ($Items.CIFSSvms.Result.num_records -ne 0) {
     # CIFS Signing
     $Items.CIFSSigning.FullHeader = $ItemHeaders.CIFSSigning
-    $Items.CIFSSigning.Formatted = ForEach ($_ in $Items.CIFSSigning.Result.records) {
-      New-Object psobject -Property @{
-        VServer            = ($_.vserver).ToString()
-        "Signing Required" = ($_.is_signing_required).ToString()
+    $Items.CIFSSigning.Formatted = ForEach ($record in $Items.CIFSSigning.Result.records) {
+      New-FormattedObject @{
+        VServer            = $record.vserver
+        "Signing Required" = $record.is_signing_required
       }
     }
     $Items.CIFSSigning.FullData = $Items.CIFSSigning.Formatted | Format-Table VServer, "Signing Required" | Out-String -Stream | Add-Indentation
@@ -1271,10 +1334,10 @@ function Format-ClusterData {
     # CIFS Workgroups
     $Items.CIFSWorkgroup.FullHeader = $ItemHeaders.CIFSWorkgroup
     if ($Items.CIFSWorkgroup.Result.num_records -ne 0) {
-      $Items.CIFSWorkgroup.Formatted = ForEach ($_ in $Items.CIFSWorkgroup.Result.records) {
-        New-Object psobject -Property @{
-          VServer      = ($_.vserver).ToString()
-          "Auth Style" = ($_.auth_style).ToString()
+      $Items.CIFSWorkgroup.Formatted = ForEach ($record in $Items.CIFSWorkgroup.Result.records) {
+        New-FormattedObject @{
+          VServer      = $record.vserver
+          "Auth Style" = $record.auth_style
         }
       }
       $Items.CIFSWorkgroup.FullData = $Items.CIFSWorkgroup.Formatted | Format-Table VServer, "Auth Style" | Out-String -Stream | Add-Indentation
@@ -1287,10 +1350,10 @@ function Format-ClusterData {
     # CIFS SMB1
     $Items.CIFSSMB1.FullHeader = $ItemHeaders.CIFSSMB1
     if ($Items.CIFSSMB1.Result.num_records -ne 0) {
-      $Items.CIFSSMB1.Formatted = ForEach ($_ in $Items.CIFSSMB1.Result.records) {
-        New-Object psobject -Property @{
-          VServer        = ($_.vserver).ToString()
-          "SMB1 Enabled" = ($_.smb1_enabled).ToString()
+      $Items.CIFSSMB1.Formatted = ForEach ($record in $Items.CIFSSMB1.Result.records) {
+        New-FormattedObject @{
+          VServer        = $record.vserver
+          "SMB1 Enabled" = $record.smb1_enabled
         }
       }
       $Items.CIFSSMB1.FullData = $Items.CIFSSMB1.Formatted | Format-Table VServer, "SMB1 Enabled" | Out-String -Stream | Add-Indentation
@@ -1302,11 +1365,11 @@ function Format-ClusterData {
 
     # AD LDAP
     $Items.LDAP.FullHeader = $ItemHeaders.LDAP
-    $Items.LDAP.Formatted = ForEach ($_ in $Items.LDAP.Result.records) {
-      if ($Items.CIFSSvms.Result.records -match ($_.vserver)) {
-        New-Object psobject -Property @{
-          VServer                        = ($_.vserver).ToString()
-          "Session Security for AD LDAP" = ($_.session_security_for_ad_ldap).ToString()
+    $Items.LDAP.Formatted = ForEach ($record in $Items.LDAP.Result.records) {
+      if ($Items.CIFSSvms.Result.records -match ($record.vserver)) {
+        New-FormattedObject @{
+          VServer                        = $record.vserver
+          "Session Security for AD LDAP" = $record.session_security_for_ad_ldap
         }
       }
     }
@@ -1315,11 +1378,11 @@ function Format-ClusterData {
 
     # CIFS VScan
     $Items.VScan.FullHeader = $ItemHeaders.VScan
-    $Items.VScan.Formatted = ForEach ($_ in $Items.VScan.Result.records) {
-      if ($Items.CIFSSvms.Result.records -match ($_.vserver)) {
-        New-Object psobject -Property @{
-          VServer        = ($_.vserver).ToString()
-          "VScan Status" = ($_.vscan_status).ToString()
+    $Items.VScan.Formatted = ForEach ($record in $Items.VScan.Result.records) {
+      if ($Items.CIFSSvms.Result.records -match ($record.vserver)) {
+        New-FormattedObject @{
+          VServer        = $record.vserver
+          "VScan Status" = $record.vscan_status
         }
       }
     }
@@ -1336,12 +1399,12 @@ function Format-ClusterData {
   # FPolicy
   $Items.FPolicy.FullHeader = $ItemHeaders.FPolicy
   if ($Items.Fpolicy.Result.num_records -ne 0) {
-    $Items.Fpolicy.Formatted = ForEach ($_ in $Items.Fpolicy.Result.records) {
-      New-Object psobject -Property @{
-        VServer       = ($_.vserver).ToString()
-        "Policy Name" = ($_.policy_name).ToString()
-        Status        = ($_.status).ToString()
-        Engine        = ($_.engine).ToString()
+    $Items.Fpolicy.Formatted = ForEach ($record in $Items.Fpolicy.Result.records) {
+      New-FormattedObject @{
+        VServer       = $record.vserver
+        "Policy Name" = $record.policy_name
+        Status        = $record.status
+        Engine        = $record.engine
       }
     }
     $Items.FPolicy.FullData = $Items.Fpolicy.Formatted | Format-Table VServer, "Policy Name", Status, Engine | Out-String -Stream | Add-Indentation
@@ -1354,10 +1417,10 @@ function Format-ClusterData {
   # NAS Auditing
   $Items.NASAuditing.FullHeader = $ItemHeaders.NASAuditing
   if ($Items.NASAuditing.Result.num_records -ne 0) {
-    $Items.NASAuditing.Formatted = ForEach ($_ in $Items.NASAuditing.Result.records) {
-      New-Object psobject -Property @{
-        VServer = ($_.vserver).ToString()
-        Enabled = ($_.state).ToString()
+    $Items.NASAuditing.Formatted = ForEach ($record in $Items.NASAuditing.Result.records) {
+      New-FormattedObject @{
+        VServer = $record.vserver
+        Enabled = $record.state
       }
     }
     $Items.NASAuditing.FullData = $Items.NASAuditing.Formatted | Format-Table VServer, Enabled | Out-String -Stream | Add-Indentation
@@ -1370,10 +1433,10 @@ function Format-ClusterData {
   # NIS
   $Items.NISServers.FullHeader = $ItemHeaders.NISServers
   if ($Items.NISServers.Result.num_records -ne 0) {
-    $Items.NISServers.Formatted = ForEach ($_ in $Items.NISServers.Result.records) {
-      New-Object psobject -Property @{
-        VServer   = ($_.name).ToString()
-        NISDomain = ($_.nis.domain).ToString()
+    $Items.NISServers.Formatted = ForEach ($record in $Items.NISServers.Result.records) {
+      New-FormattedObject @{
+        VServer   = $record.name
+        NISDomain = $record.nis.domain
       }
     }
     $Items.NISServers.FullData = $Items.NISServers.Formatted | Format-Table vserver, nisdomain | Out-String -Stream | Add-Indentation
@@ -1388,11 +1451,11 @@ function Format-ClusterData {
   # Snapshot Autodeletion
   $Items.SnapShotAutoDelete.FullHeader = $ItemHeaders.SnapShotAutoDelete
   if ($Items.SnapShotAutoDelete.Result.num_records -ne 0) {
-    $Items.SnapShotAutoDelete.Formatted = ForEach ($_ in $Items.SnapShotAutoDelete.Result.records) {
-      New-Object psobject -Property @{
-        VServer = ($_.vserver).ToString()
-        Enabled = ($_.enabled).ToString()
-        Volume  = ($_.volume).ToString()
+    $Items.SnapShotAutoDelete.Formatted = ForEach ($record in $Items.SnapShotAutoDelete.Result.records) {
+      New-FormattedObject @{
+        VServer = $record.vserver
+        Enabled = $record.enabled
+        Volume  = $record.volume
       }
     }
     $Items.SnapShotAutoDelete.FullData = $Items.SnapShotAutoDelete.Formatted | Format-Table VServer, Volume, Enabled | Out-String -Stream | Add-Indentation
@@ -1405,11 +1468,11 @@ function Format-ClusterData {
   # Snapshot Policy
   $Items.NullSnapShotPolicy.FullHeader = $ItemHeaders.NullSnapShotPolicy
   if ($Items.NullSnapShotPolicy.Result.num_records -ne 0) {
-    $Items.NullSnapShotPolicy.Formatted = ForEach ($_ in $Items.NullSnapShotPolicy.Result.records) {
-      New-Object psobject -Property @{
-        Volume            = ($_.volume).ToString()
+    $Items.NullSnapShotPolicy.Formatted = ForEach ($record in $Items.NullSnapShotPolicy.Result.records) {
+      New-FormattedObject @{
+        Volume            = $record.volume
         "Snapshot Policy" = "-"
-        VServer           = ($_.vserver).ToString()
+        VServer           = $record.vserver
       }
     }
     $Items.NullSnapShotPolicy.FullData = $Items.NullSnapShotPolicy.Formatted | Format-Table volume, "Snapshot Policy", VServer | Out-String -Stream | Add-Indentation
@@ -1418,11 +1481,11 @@ function Format-ClusterData {
     $Items.NullSnapShotPolicy.FullData = "`n$Spacer No Volumes with a Snapshot Policy of NULL."
   }
   if ($Items.NoneSnapShotPolicy.Result.num_records -ne 0) {
-    $Items.NoneSnapshotPolicy.Formatted = ForEach ($_ in $Items.NoneSnapShotPolicy.Result.records) {
-      New-Object psobject -Property @{
-        Volume            = ($_.volume).ToString()
-        "Snapshot Policy" = ($_.snapshot_policy).ToString()
-        VServer           = ($_.vserver).ToString()
+    $Items.NoneSnapshotPolicy.Formatted = ForEach ($record in $Items.NoneSnapShotPolicy.Result.records) {
+      New-FormattedObject @{
+        Volume            = $record.volume
+        "Snapshot Policy" = $record.snapshot_policy
+        VServer           = $record.vserver
       }
     }
     $Items.NoneSnapShotPolicy.FullData = $Items.NoneSnapshotPolicy.Formatted | Format-Table volume, "Snapshot Policy", VServer | Out-String -Stream | Add-Indentation
@@ -1437,11 +1500,11 @@ function Format-ClusterData {
   $Items.SnapShotLocking.FullHeader = $ItemHeaders.SnapShotLocking
   if ($Items.SnapShotLocking.Supported) {
     if ($Items.SnapShotLocking.Result.num_records -ne 0) {
-      $Items.SnapShotLocking.Formatted = ForEach ($_ in $Items.SnapShotLocking.Result.records) {
-        New-Object psobject -Property @{
-          VServer                    = ($_.vserver).ToString()
-          Volume                     = ($_.volume).ToString()
-          "Snapshot Locking Enabled" = ($_.snapshot_locking_enabled).ToString()
+      $Items.SnapShotLocking.Formatted = ForEach ($record in $Items.SnapShotLocking.Result.records) {
+        New-FormattedObject @{
+          VServer                    = $record.vserver
+          Volume                     = $record.volume
+          "Snapshot Locking Enabled" = $record.snapshot_locking_enabled
         }
       }
       $Items.SnapShotLocking.FullData = $Items.SnapShotLocking.Formatted | Format-Table VServer, Volume, "Snapshot Locking Enabled" | Out-String -Stream | Add-Indentation
@@ -1459,10 +1522,10 @@ function Format-ClusterData {
   $Items.SVMAntiRansomware.FullHeader = $ItemHeaders.SVMAntiRansomware
   if ($Items.SVMAntiRansomware.Supported) {
     if ($Items.SVMAntiRansomware.Result.num_records -ne 0) {
-      $Items.SVMAntiRansomware.Formatted = ForEach ($_ in $Items.SVMAntiRansomware.Result.records) {
-        New-Object psobject -Property @{
-          VServer                = ($_.name).ToString()
-          "Default Volume State" = ($_.anti_ransomware_default_volume_state).ToString()
+      $Items.SVMAntiRansomware.Formatted = ForEach ($record in $Items.SVMAntiRansomware.Result.records) {
+        New-FormattedObject @{
+          VServer                = $record.name
+          "Default Volume State" = $record.anti_ransomware_default_volume_state
         }
       }
       $Items.SVMAntiRansomware.FullData = $Items.SVMAntiRansomware.Formatted | Format-Table VServer, "Default Volume State" | Out-String -Stream | Add-Indentation
@@ -1482,11 +1545,11 @@ function Format-ClusterData {
   $Items.VolumeAntiRansomware.FullHeader = $ItemHeaders.VolumeAntiRansomware
   if ($Items.VolumeAntiRansomware.Supported) {
     if ($Items.VolumeAntiRansomware.Result.num_records -ne 0) {
-      $Items.VolumeAntiRansomware.Formatted = ForEach ($_ in $Items.VolumeAntiRansomware.Result.records) {
-        New-Object psobject -Property @{
-          VServer                 = ($_.vserver).ToString()
-          Volume                  = ($_.volume).ToString()
-          "Anti Ransomware State" = ($_.anti_ransomware_state).ToString()
+      $Items.VolumeAntiRansomware.Formatted = ForEach ($record in $Items.VolumeAntiRansomware.Result.records) {
+        New-FormattedObject @{
+          VServer                 = $record.vserver
+          Volume                  = $record.volume
+          "Anti Ransomware State" = $record.anti_ransomware_state
         }
       }
       $Items.VolumeAntiRansomware.FullData = $Items.VolumeAntiRansomware.Formatted | Format-Table VServer, Volume, "Anti Ransomware State" | Out-String -Stream | Add-Indentation
@@ -1531,11 +1594,11 @@ function Format-ClusterData {
 
   # Drive Protection
   if ($Items.DriveProtection.Result.num_records -ne 0) {
-    $Items.DriveProtection.Formatted = ForEach ($_ in $Items.DriveProtection.Result.records) {
-      New-Object psobject -Property @{
-        Aggregate                  = ($_.aggregate).ToString()
-        Node                       = ($_.node).ToString()
-        "Drive Protection Enabled" = ($_.drive_protection_enabled).ToString()
+    $Items.DriveProtection.Formatted = ForEach ($record in $Items.DriveProtection.Result.records) {
+      New-FormattedObject @{
+        Aggregate                  = $record.aggregate
+        Node                       = $record.node
+        "Drive Protection Enabled" = $record.drive_protection_enabled
       }
     }
     $Items.DriveProtection.FullData = $Items.DriveProtection.Formatted | Format-Table Aggregate, Node, "Drive Protection Enabled" | Out-String -Stream | Add-Indentation
@@ -1547,12 +1610,12 @@ function Format-ClusterData {
 
   # Volume Encryption
   if ($Items.VolumeEncryption.Result.num_records -ne 0) {
-    $Items.VolumeEncryption.Formatted = ForEach ($_ in $Items.VolumeEncryption.Result.records) {
-      New-Object psobject -Property @{
-        VServer           = ($_.vserver).ToString()
-        Volume            = ($_.volume).ToString()
-        "Encryption Type" = ($_.encryption_type).ToString()
-        "Is Encrypted"    = ($_.is_encrypted).ToString()
+    $Items.VolumeEncryption.Formatted = ForEach ($record in $Items.VolumeEncryption.Result.records) {
+      New-FormattedObject @{
+        VServer           = $record.vserver
+        Volume            = $record.volume
+        "Encryption Type" = $record.encryption_type
+        "Is Encrypted"    = $record.is_encrypted
       }
     }
     $Items.VolumeEncryption.FullData = $Items.VolumeEncryption.Formatted | Format-Table VServer, Volume, "Encryption Type", "Is Encrypted" | Out-String -Stream | Add-Indentation

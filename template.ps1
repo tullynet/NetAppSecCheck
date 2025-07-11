@@ -156,6 +156,30 @@ function Add-Summary {
   }
 }
 
+function Convert-ToStringOrNull {
+  param (
+    [Parameter(Mandatory = $false)]
+    $InputObject
+  )
+  if ($null -ne $InputObject) {
+    return $InputObject.ToString()
+  }
+  else {
+    return $null
+  }
+}
+
+function New-FormattedObject {
+  param (
+    [hashtable]$PropertyMap
+  )
+  $converted = @{}
+  foreach ($key in $PropertyMap.Keys) {
+    $converted[$key] = Convert-ToStringOrNull $PropertyMap[$key]
+  }
+  return [pscustomobject]$converted
+}
+
 # Process and Format Data
 function Format-ClusterData {
   # Begin - Software Version - Category 0
