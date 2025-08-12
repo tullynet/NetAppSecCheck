@@ -1,41 +1,38 @@
 <#
 .NOTES
 
-  Information on running PowerShell scripts can be found here:
+  For guidance on running PowerShell scripts, see:
     -http://ss64.com/ps/syntax-run.html
     -https://technet.microsoft.com/en-us/library/bb613481.aspx
 
   This script requires PowerShell 7 or later to run, information on installing or upgrading PowerShell can be found here:
     -https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows
 
-  This script also requires that the ONTAP cluster is running 9.6 or later
+  Requires ONTAP version 9.6 or later.
 
   File Name: NetAppSecCheck.ps1
 
 .DESCRIPTION
-
-  The intention of this script is to provide a quick check of several security configurations
+  This script performs a quick security configuration check for ONTAP clusters.
 
   Typically the following tools provide security related information for ONTAP clusters:
     - System Manager Dashboard
     - Unified Manager Cluster Security Objectives
     - Active IQ Digital Advisor
 
-  If a more thorough review is necessary of your environment, please consider contacting
-  NetApp Services to request a Data Protection and Security Assessment
+  For a comprehensive review, contact NetApp Services to request a Data Protection and Security Assessment.
 
-  The documents referenced in the KB article linked below should be consulted for the most up to
-  date information
-
-  https://kb.netapp.com/onprem/ontap/os/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
+  Refer to the following KB article for the most up-to-date information:
+    https://kb.netapp.com/on-prem/ontap/Ontap_OS/OS-KBs/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
   
   Security Hardening Overview
     https://docs.netapp.com/us-en/ontap-technical-reports/ontap-security-hardening/security-hardening-overview.html
   Ransomware Overview
     https://docs.netapp.com/us-en/ontap-technical-reports/ransomware-solutions/ransomware-overview.html
-  
-  TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
-  TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
+  How to configure LDAP in ONTAP 
+    TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
+  Multifactor authentication in ONTAP
+    TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
 
 .EXAMPLE
 
@@ -57,11 +54,13 @@
 
 Version:
 2.1
+  Removed checks
+    Cloud Insights
   Additional checks
     Expired Certificates
     Concurrent Session Limits
     SSH etm Algorithms
-    Trusted Platform Manager
+    Trusted Platform Module
     Added Supported Protocols to FIPS check
 
   Bug fixes
@@ -79,7 +78,7 @@ Version:
     Added a Cluster Details section
 
   Cosmetic Changes
-    Progress indicator during data collection beacause why not
+    Added a progress indicator during data collection for improved visibility.
 
 2.0 - Updated to make future additions more modular. Added additional output for password complexity.
 Bug fixes, formatting.
@@ -103,28 +102,26 @@ $Spacer = " " * 7
 # Header
 $Header = @"
 $Separator
-  The intention of this script is to provide a quick check of several security configurations
+  This script performs a quick security configuration check for ONTAP clusters.
 
   Typically the following tools provide security related information for ONTAP clusters:
     - System Manager Dashboard
     - Unified Manager Cluster Security Objectives
     - Active IQ Digital Advisor
 
-  If a more thorough review is necessary of your environment, please consider contacting
-  NetApp Services to request a Data Protection and Security Assessment
+  For a comprehensive review, contact NetApp Services to request a Data Protection and Security Assessment.
 
-  The documents referenced in the KB article linked below should be consulted for the most up to
-  date information
-
-  https://kb.netapp.com/onprem/ontap/os/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
+  Refer to the following KB article for the most up-to-date information:
+    https://kb.netapp.com/on-prem/ontap/Ontap_OS/OS-KBs/How_to_perform_a_security_health_check_with_a_script_in_ONTAP
   
   Security Hardening Overview
     https://docs.netapp.com/us-en/ontap-technical-reports/ontap-security-hardening/security-hardening-overview.html
   Ransomware Overview
     https://docs.netapp.com/us-en/ontap-technical-reports/ransomware-solutions/ransomware-overview.html
-  
-  TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
-  TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
+  How to configure LDAP in ONTAP 
+    TR-4835 - https://www.netapp.com/media/19423-tr-4835.pdf
+  Multifactor authentication in ONTAP
+    TR-4647 - https://www.netapp.com/media/17055-tr4647.pdf
 $Separator
 "@
 
@@ -234,12 +231,6 @@ $Items = [ordered]@{
     Url             = "private/cli/security/session/limit?fields=max-active-limit"
     Category        = 1
     SummaryItem     = "Concurrent Session Limits Configured"
-  }
-  CloudInsights           = @{
-    RequiredVersion = 10
-    Url             = "private/cli/cluster/agent/connection?fields=application-url"
-    Category        = 1
-    SummaryItem     = "Cloud Insights Configured"
   }
   LoginBannerConfig       = @{
     RequiredVersion = 6
@@ -527,7 +518,7 @@ $Items = [ordered]@{
     Category        = 8
     SummaryItem     = "Key-Manager Configured"
   }
-  NSESEDDisks             = @{
+  DiskEncryption          = @{
     RequiredVersion = 6
     Url             = "private/cli/storage/encryption/disk?fields=disk,type,protection-mode"
     Category        = 8
@@ -564,7 +555,7 @@ $Categories = [ordered]@{
 $ItemHeaders = [ordered]@{
   Version                 = @"
 $Separator
-Recommendation: Running a recommended release of ONTAP
+Recommendation: Ensure a recommended release of ONTAP is installed
 Reference: SU2
 https://kb.netapp.com/Support_Bulletins/Customer_Bulletins/SU2
 
@@ -574,36 +565,31 @@ $Separator
 "@
   NTPServers              = @"
 $Separator
-Recommendation: The number of servers configured for NTP should not be less than 3
+Recommendation: Configure at least three NTP servers
 Reference: System Manager Insights and Security Hardening Overview section "Network Time Protocol"
 "@
   ASUPConfig              = @"
 $Separator
-Recommendation: AutoSupport should use a secure protocol (HTTPS) and should be enabled
+Recommendation: Enable AutoSupport and use HTTPS for secure communication
 Reference: System Manager Insights and Security Hardening Overview section "NetApp AutoSupport"
 "@
   CLITimeout              = @"
 $Separator
-Recommendation: CLI timeout value should match your organization's requirements
+Recommendation: Configure CLI timeout according to your organization's requirements
 Reference: Security Hardening Overview section "System Administration Methods"
 "@
   ConcurrentSessionLimits = @"
 $Separator
 Recommendation: Concurrent Session Limits should be set to match your organization's requirements
 "@
-  CloudInsights           = @"
-$Separator
-Recommendation: Cloud Insights provides an external mode FPolicy server
-Reference: TR-4572 section "Cloud Insights"
-"@
   LoginBannerConfig       = @"
 $Separator
-Recommendation: The login banner and message of the day (motd) should match your organization's requirements
+Recommendation: Configure the login banner and MOTD to meet your organization's requirements
 Reference: System Manager Insights and Security Hardening Overview section "System Administration Methods"
 "@
   PasswordConfig          = @"
 $Separator
-Recommendation: Configured password parameters should match your organization's policy
+Recommendation: Configured password parameters should match your organization's requirements
 Reference: Security Hardening Overview section "Login and Password Parameters"
 "@
   LogForwarding           = @"
@@ -626,7 +612,7 @@ Reference: System Manager Insights and Security Hardening Overview section "Role
 "@
   BuiltinUsers            = @"
 $Separator
-Recommendation: Built in accounts should be locked
+Recommendation: Built-in accounts should be locked
 Reference: System Manager Insights and Security Hardening Overview section "Default Administrative Accounts"
 "@
   RestRoles               = @"
@@ -637,11 +623,10 @@ Reference: Security Hardening Overview section "Effect of REST APIs on NAS Audit
 "@
   UserDetails             = @"
 $Separator
-Recommendation: For each login the authentication-method should be public key for machine access
-                and can be password for user access
-                The second-authentication-method should not be none to enable MFA
-                The role should be appropriate to grant them privilege to perform their job function or required task
-                The hash-function should be sha512
+Recommendation: Use public key authentication for machine access and password authentication for user access
+                Enable MFA by setting a second authentication method (not 'none')
+                Assign roles with least privilege required for job functions
+                Use SHA-512 for password hashing
 Reference: Security Hardening Overview section "SHA-512 Support", "Managing SSHv2"
            "Roles, Applications, and Authentication", and
            TR-4647 section "ONTAP SSH Two-Factor Chained Authentication"
@@ -653,12 +638,12 @@ Reference: Security Hardening Overview section "Multi-Admin Verification"
 "@
   SNMPUsers               = @"
 $Separator
-Recommendation: SNMP Users shoud not use an authentication method of community
+Recommendation: SNMP Users should not use an authentication method of community
 "@
   RSHUsers                = @"
 $Separator
 Recommendation: No logins should exist with the Telnet or RSH application
-Reference: Security Hardening Overview section "Application Methods"
+Reference: Security Hardening Overview section "ONTAP roles, applications, and authentication"
 "@
   ClusterPeerEncryption   = @"
 $Separator
@@ -667,8 +652,8 @@ Reference: Security Hardening Overview section "Data Replication Encryption"
 "@
   FIPS                    = @"
 $Separator
-Recommendation: FIPS Mode should be enabled
-Reference: System Manager Insights and Security Hardening Overview section "Managing TLS and SSL"
+Recommendation: Beginning with ONTAP 9.11.1 and TLS 1.3 support, you can validate FIPS 140-3
+Reference: Security Hardening Overview section "FIPS mode and TLS and SSL management in ONTAP"
 "@
   IPSec                   = @"
 $Separator
@@ -691,14 +676,14 @@ $Spacer Problematic Algorithms:
 "@
   SelfSignedCerts         = @"
 $Separator
-Recommendation: On production systems no self-signed ceritficates should exist
+Recommendation: Remove self-signed certificates from production systems
 Reference: Security Hardening Overview section "Creating a CA-Signed Digital Certificate"
 "@
   ExpiredCerts            = @"
 $Separator
-Recommendation: On production systems no expired ceritficates should exist
+Recommendation: Replace expired certificates on production systems
 Reference: Security Hardening Overview section "Creating a CA-Signed Digital Certificate"
-           https://kb.netapp.com/on-prem/ontap/Ontap_OS/OS-KBs/How_to_renew_a_Self-Signed_SSL_certificate_in_ONTAP_9
+           https://kb.netapp.com/on-prem/ontap/Ontap_OS/OS-KBs/Renew_TLS_SSL_Certificate_in_ONTAP_9_Resolution_Guide
 "@
   SSLConfig               = @"
 $Separator
@@ -720,7 +705,7 @@ Reference: TR-4647 section "The requirement for strong administrative credential
 "@
   CIFSSigning             = @"
 $Separator
-Recommendation: For each SVM configured with CIFS the is-signing-required should be true
+Recommendation: For each SVM configured with CIFS, ensure is-signing-required is set to true
 Reference: Security Hardening Overview section "CIFS SMB Signing and Sealing"
 "@
   CIFSWorkgroup           = @"
@@ -734,7 +719,7 @@ Recommendation: CIFS SVMs should not be configured to use SMB1
   LDAP                    = @"
 $Separator
 Recommendation: For each SVM configured with CIFS session-security-for-ad-ldap should be set to a minimum of sign
-to match your organization's requirements
+                to match your organization's requirements
 Reference: TR-4835 section "Microsoft LDAP Channel Binding Requirement"
 "@
   VScan                   = @"
@@ -784,9 +769,9 @@ Reference: System Manager Insights
   TrustedPlatformModule   = @"
 $Separator
 Recommendation: Platforms with a TPM chip and TPM license will generate and seal the node key encryption key to
-                protect the highest level of the OKM keying hierarchy in ONTAP 9.8 and later.
+                protect the highest level of the OKM keying hierarchy in ONTAP 9.8 and later
 Reference: Security Hardening Overview section "Storage Encryption"
-           https://kb.netapp.com/on-prem/ontap/OHW/OHW-KBs/What_is_Trusted_Platform_Module_(TPM)
+           https://kb.netapp.com/on-prem/ontap/OHW/OHW-KBs/What_is_Trusted_Platform_Module_TPM
 "@
   KeyManager              = @"
 $Separator
@@ -909,23 +894,6 @@ function Format-ClusterData {
   }
   $Items.ConcurrentSessionLimits.FullData = $Items.ConcurrentSessionLimits.Formatted | Format-Table Interface, Category, MaxActive | Out-String -Stream | Add-Indentation
   $Items.ConcurrentSessionLimits.Summary = Add-Summary $Items.ConcurrentSessionLimits.SummaryItem "Review Full Output" 1
-
-  # Cloud Insights
-  $Items.CloudInsights.FullHeader = $ItemHeaders.CloudInsights
-  if ($Items.CloudInsights.Supported) {
-    if ($Items.CloudInsights.Result.num_records -ne 0) {
-      $Items.CloudInsights.FullData = $Items.CloudInsights.Result.records | Format-Table | Out-String -Stream | Add-Indentation
-      $Items.CloudInsights.Summary = Add-Summary $Items.CloudInsights.SummaryItem ($Items.CloudInsights.Result.records.application_url.contains("cloudinsights.netapp.com")) 1
-    }
-    else {
-      $Items.CloudInsights.FullData = "`n$Spacer No Results Returned.`n"
-      $Items.CloudInsights.Summary = Add-Summary $Items.CloudInsights.SummaryItem "False" 1
-    }
-  }
-  else {
-    $Items.CloudInsights.FullData = "`n$Spacer Not available in this release.`n"
-    $Items.CloudInsights.Summary = Add-Summary $Items.CloudInsights.SummaryItem "Not available in this release" 1
-  }
 
   # Banner and MOTD
   $Items.LoginBannerConfig.FullHeader = $ItemHeaders.LoginBannerConfig
@@ -1076,7 +1044,7 @@ function Format-ClusterData {
         AuthMethod  = $record.authentication_method
       }
     }
-    $Items.SNMPUsers.FullData = $Items.SNMPUserss.Formatted | Format-Table username, vserver, application, authmethod | Out-String -Stream | Add-Indentation
+    $Items.SNMPUsers.FullData = $Items.SNMPUsers.Formatted | Format-Table username, vserver, application, authmethod | Out-String -Stream | Add-Indentation
   }
   else {
     $Items.SNMPUsers.FullData = "`n$Spacer No SNMP users found with community authentication method.`n"
@@ -1158,7 +1126,7 @@ function Format-ClusterData {
   if ($Items.IPSec.Supported) {
     $Items.IPSec.FullData = "`n$Spacer IPsec Enabled - $($Items.IPsec.Result.enabled)`n"
     if ($Items.IPsecPolicy.Result.num_records -ne 0) {
-      $Items.IPSecPolicy.FullData = $Items.IPsecPol.Result.records | Format-Table | Out-String -Stream | Add-Indentation
+      $Items.IPSecPolicy.FullData = $Items.IPsecPolicy.Result.records | Format-Table | Out-String -Stream | Add-Indentation
     }
     else {
       $Items.IPSecPolicy.FullData = "$Spacer No IPsec Policies Found.`n"
@@ -1260,7 +1228,7 @@ function Format-ClusterData {
     }
   }
   $Items.SSLConfig.FullData = $Items.SSLConfig.Formatted | Format-Table VServer, "Client Enabled" | Out-String -Stream | Add-Indentation
-  $Items.SSLConfig.Summary = Add-Summary $Items.SSLConfig.SummaryItem (!$Items.SSLConfig.Formatted."Client Enabled".contains("True)")) 4
+  $Items.SSLConfig.Summary = Add-Summary $Items.SSLConfig.SummaryItem (!$Items.SSLConfig.Formatted."Client Enabled".contains("True")) 4
   $Items.HTTPUsers.Formatted = ForEach ($record in $Items.HTTPUsers.Result.records) {
     New-FormattedObject @{
       VServer     = $record.vserver
@@ -1577,14 +1545,14 @@ function Format-ClusterData {
   $Items.TrustedPlatformModule.FullHeader = $ItemHeaders.TrustedPlatformModule
   if ($Items.TrustedPlatformModule.Supported -eq $True) {
     if ($Items.TrustedPlatformModule.Result.records.is_available -notcontains "no" -and $Items.TrustedPlatformModule.Result.records.is_available -notcontains $null) {
-      $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Manager is Available for all nodes.`n"
+      $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Module is available for all nodes.`n"
     }
     else {
-      $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Manager is not Available for all nodes.`n"
+      $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Module is not available for all nodes.`n"
     }
   }
   else {
-    $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Manager is not available in this release.`n"
+    $Items.TrustedPlatformModule.FullData = "`n$Spacer Trusted Platform Module is not available in this release.`n"
   }
   $Items.TrustedPlatformModule.Summary = Add-Summary $Items.TrustedPlatformModule.SummaryItem ($Items.TrustedPlatformModule.Result.records.is_available -notcontains "no" -and $Items.TrustedPlatformModule.Result.records.is_available -notcontains $null) 8
 
@@ -1598,18 +1566,18 @@ function Format-ClusterData {
   }
   $Items.KeyManager.Summary = Add-Summary $Items.KeyManager.SummaryItem ($Items.KeyManager.Result.num_records -ne 0) 8
 
-  # NSE/SED Drives
-  if ($Items.NSESEDDisks.Result.num_records -ne 0) {
-    $Items.NSESEDDisks.Formatted = New-FormattedObject @{
-      "NSE/SED Protection Status" = (($Items.NSESEDDisks.Result.records | Where-Object { $_.protection_mode -match "datafull" }).count -eq $Items.NSESEDDisks.Result.num_records)
+  # Disk Encryption
+  if ($Items.DiskEncryption.Result.num_records -ne 0) {
+    $Items.DiskEncryption.Formatted = New-FormattedObject @{
+      "NSE/SED Protection Status" = (($Items.DiskEncryption.Result.records | Where-Object { $_.protection_mode -match "datafull" }).count -eq $Items.DiskEncryption.Result.num_records)
     }
   }
   else {
-    $Items.NSESEDDisks.Formatted = New-FormattedObject @{"NSE/SED Protection Status" = "No NSE/SED Disks Found." }
+    $Items.DiskEncryption.Formatted = New-FormattedObject @{"NSE/SED Protection Status" = "No NSE/SED Disks Found." }
   }
-  $Items.NSESEDDisks.FullData = $Items.NSESEDDisks.Formatted | Format-Table "NSE/SED Protection Status" | Out-String -Stream | Add-Indentation
-  $Items.NSESEDDisks.FullData += "$Spacer Consult the output of 'storage encryption disk show' for further NSE/SED details.`n"
-  $Items.NSESEDDisks.Summary = Add-Summary $Items.NSESEDDisks.SummaryItem $Items.NSESEDDisks.Formatted."NSE/SED Protection Status" 8
+  $Items.DiskEncryption.FullData = $Items.DiskEncryption.Formatted | Format-Table "NSE/SED Protection Status" | Out-String -Stream | Add-Indentation
+  $Items.DiskEncryption.FullData += "$Spacer Consult the output of 'storage encryption disk show' for further NSE/SED details.`n"
+  $Items.DiskEncryption.Summary = Add-Summary $Items.DiskEncryption.SummaryItem $Items.DiskEncryption.Formatted."NSE/SED Protection Status" 8
 
   # Aggregate Encryption
   if ($Items.AggrEncryption.Result.num_records -ne 0) {
